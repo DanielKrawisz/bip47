@@ -5,7 +5,7 @@
 namespace bip47
 {
     
-int notification::version(const transaction& tx) {
+uint8_t notification::version(const transaction& tx) {
     if (v1::valid(tx)) return 1;
     if (v2::valid(tx)) return 2;
     if (v3::valid(tx)) return 3;
@@ -54,9 +54,21 @@ int notification::version() const {
 bool notification::valid() const {
     return valid(tx);
 }
+
+bool designated_pubkey_by_version(data_chunk &designated, std::vector<transaction> previous, const transaction& tx, uint8_t version);
+    
+bool notification::designated_pubkey(data_chunk &designated, std::vector<transaction> previous, const transaction& tx) {
+    return designated_pubkey_by_version(designated, previous, tx, notification::version(tx));
+}
     
 bool notification::designated_pubkey(data_chunk &designated, std::vector<transaction> previous) const {
-    return notification::designated_pubkey(designated, previous, tx);
+    return designated_pubkey_by_version(designated, previous, tx, notification::version(tx));
+}
+
+bool designated_pubkey_by_version(data_chunk &designated, std::vector<transaction> previous, const transaction& tx, int version) {
+    if (version == 1) return v1::designated_pubkey(designated, previous, tx);
+    if (version == 2) return v2::designated_pubkey(designated, previous, tx);
+    return false;
 }
 
 //TODO

@@ -13,7 +13,7 @@ typedef libbitcoin::data_chunk data_chunk;
     
 struct notification {
 public:
-    static int version(const transaction& tx);
+    static uint8_t version(const transaction& tx);
     static bool valid(const transaction& tx);
     static bool designated_pubkey(data_chunk& designated, std::vector<transaction> previous, const transaction& nt);
     

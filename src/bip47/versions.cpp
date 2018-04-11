@@ -1,5 +1,6 @@
 #include <bip47/versions.hpp>
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
+#include "designated.cpp"
 
 namespace bip47
 {
@@ -28,6 +29,14 @@ bool v1::valid(const transaction& tx)
     }
     
     return false;
+}
+
+bool v1::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
+    return designated_pubkey(out, previous, nt);
+}
+
+bool v2::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
+    return designated_pubkey(out, previous, nt);
 }
 
 }

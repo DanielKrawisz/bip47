@@ -1,8 +1,3 @@
-/*
-#include <bitcoin/bitcoin/machine/operation.hpp>*/
-/*#include <bitcoin/bitcoin/chain/output.hpp>
-#include <bitcoin/bitcoin/math/elliptic_curve.hpp>*/
-
 #include <bip47/patterns.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bitcoin/bitcoin/chain/script.hpp>
@@ -77,8 +72,8 @@ bool extract_designated_pubkey(
 // The previous transactions are not necessarily given in order.
 bool designated_pubkey(
     data_chunk& out,
-    const transaction& nt,
-    const std::vector<transaction>& previous)
+    const std::vector<transaction>& previous, 
+    const transaction& nt)
 {
     auto inputs = nt.inputs();
     const unsigned int size = inputs.size();
