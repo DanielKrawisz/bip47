@@ -5,9 +5,10 @@
 namespace bip47
 {
     
-typedef libbitcoin::wallet::payment_address payment_address;
+namespace v1
+{
 
-const transaction v1::notify(
+const transaction notify(
         const payment_code& from, 
         const ec_compressed& to, 
         const outpoint& prior, 
@@ -16,24 +17,45 @@ const transaction v1::notify(
 {
     // TODO insert input for signing. 
     return libbitcoin::chain::transaction(1, 0, {}, {
-        libbitcoin::chain::output(amount, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_key_hash_pattern(payment_address(to, payment_address::mainnet_p2sh)))), 
+        libbitcoin::chain::output(amount, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_key_hash_pattern(address(to, address::mainnet_p2sh)))), 
         chain::output(0, chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(from.mask(designated, to, prior))))});
 }
 
-bool v1::valid(const transaction& tx)
+bool extract_payload(payment_code* payload, const transaction& tx);
+
+bool extract_payload(payment_code* payload, const transaction& tx)
 {
     for (auto output : tx.outputs()) {
         const auto ops = output.script().operations();
         if (!chain::script::is_pay_null_data_pattern(ops)) continue;
-        if (ops[1].data().size() == 80) return true;
+        if (ops[1].data().size() == 80) {
+            if (payload != 0) *payload = ops[1].data();
+            return true;
+        }
     }
     
     return false;
 }
 
-bool v1::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
+bool inline valid(const transaction& tx)
+{
+    return extract_payload(0, tx);
+}
+
+bool notification_to(payment_code* payload, const transaction& tx, const address& recipient) {
+    for (auto output : tx.outputs()) {
+        const auto ops = output.script().operations();
+        if (chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == recipient) return extract_payload(payload, tx);
+    }
+    
+    return false;
+}
+
+bool inline designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
     return designated_pubkey(out, previous, nt);
 }
+
+} // v1
 
 bool is_bip47_v2_multisig_pattern(const machine::operation::list& ops);
 
@@ -63,7 +85,7 @@ bool v2::valid(const transaction& tx)
     return false;
 }
 
-bool v2::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
+bool inline v2::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
     return designated_pubkey(out, previous, nt);
 }
 

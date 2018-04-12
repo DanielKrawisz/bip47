@@ -9,7 +9,6 @@ namespace bip47
 {
     
 typedef libbitcoin::chain::transaction transaction;
-typedef libbitcoin::data_chunk data_chunk;
     
 struct notification {
 public:

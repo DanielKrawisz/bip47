@@ -75,7 +75,7 @@ bool notification::designated_pubkey(data_chunk &designated, std::vector<transac
 //TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
 const outpoint notification::find_redeemable_output(const transaction& tx, const ec_private& pk) {
     const auto pubkey = pk.to_public();
-    const auto address = pk.to_payment_address();
+    const address address = pk.to_payment_address();
     for (auto o : tx.outputs()) {
         const auto ops = o.script().operations();
         if (libbitcoin::chain::script::is_pay_key_hash_pattern(ops)) {

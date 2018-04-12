@@ -2,7 +2,7 @@
 #define BIP47_VERSIONS_HPP
 
 #include <bitcoin/bitcoin/chain/transaction.hpp>
-#include <bip47/secret.hpp>
+#include <bip47/payment_code.hpp>
 
 using namespace libbitcoin;
 
@@ -17,10 +17,11 @@ const transaction notify(
     const payment_code& from, 
     const ec_compressed& to, 
     const outpoint& prior, 
-    const ec_secret& designated, 
+    const ec_private& designated, 
     unsigned int amount);
 
 bool valid(const transaction &tx);
+bool notification_to(payment_code* payload, const transaction& tx, const address& recipient);
     
 bool designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt);
 } // v1
@@ -31,7 +32,7 @@ const transaction notify(
     const payment_code& from, 
     const ec_compressed& to, 
     const outpoint& prior, 
-    const ec_secret& designated, 
+    const ec_private& designated, 
     unsigned int amount);
 
 bool valid(const transaction &tx);
@@ -45,7 +46,7 @@ const transaction notify(
     const payment_code& from, 
     const ec_compressed& to, 
     const outpoint& prior, 
-    const ec_secret& designated, 
+    const ec_private& designated, 
     unsigned int amount);
 
 bool valid(const transaction &tx);

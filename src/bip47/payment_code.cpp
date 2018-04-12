@@ -9,7 +9,6 @@ namespace bip47
     
 payment_code::payment_code(const libbitcoin::byte_array<payment_code_size> code):code(code) {}
 
-// TODO
 payment_code::payment_code(uint8_t version, hd_public pubkey, bool bitmessage_notification) {
     if (version < 1 && version > 3) return;
     code[0] = version;
@@ -20,6 +19,9 @@ payment_code::payment_code(uint8_t version, hd_public pubkey, bool bitmessage_no
         code[i] = 0;
     }
 }
+
+// TODO
+payment_code::payment_code(const data_chunk data) {}
 
 uint8_t inline payment_code::operator[] (const int index) const {
     return code[index];
@@ -42,7 +44,9 @@ bool payment_code::bitmessage_notification() const {
 // TODO
 /*hd_public pubkey() const;
 
-hd_public address(const payment_code& to, unsigned int n) const;
+address address_to(uint8_t version) const;
+
+hd_public address_to(const payment_code& to, unsigned int n) const;
 */
 
 // TODO
