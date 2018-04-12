@@ -11,7 +11,7 @@ const transaction v1::notify(
         const payment_code& from, 
         const ec_compressed& to, 
         const outpoint& prior, 
-        const ec_secret& designated, 
+        const ec_private& designated, 
         unsigned int amount)
 {
     // TODO insert input for signing. 

@@ -2,7 +2,7 @@
 #define BIP47_NOTIFICATION_HPP
 
 #include <vector>
-#include <bip47/secret.hpp>
+#include <bip47/payment_code.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 
 namespace bip47
@@ -21,7 +21,7 @@ public:
         const payment_code& from, 
         const payment_code& to, 
         const transaction& prior, 
-        const ec_secret& designated,
+        const ec_private& designated,
         unsigned int amount);
     
     const transaction& tx;
@@ -33,7 +33,7 @@ public:
     bool designated_pubkey(data_chunk& designated, std::vector<transaction> previous) const;
 
 private:
-    static const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk);
+    static const outpoint find_redeemable_output(const transaction& tx, const ec_private& pk);
 };
 
 }
