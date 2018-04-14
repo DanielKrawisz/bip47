@@ -9,12 +9,13 @@ namespace bip47
 {
     
 typedef libbitcoin::chain::transaction transaction;
+typedef libbitcoin::wallet::ec_public ec_public;
     
 struct notification {
 public:
     static uint8_t version(const transaction& tx);
     static bool valid(const transaction& tx);
-    static bool designated_pubkey(data_chunk& designated, std::vector<transaction> previous, const transaction& nt);
+    static bool designated_pubkey(ec_public& designated, std::vector<transaction> previous, const transaction& nt);
     
     static const transaction notify(
         const payment_code& from, 
@@ -29,7 +30,7 @@ public:
     
     int version() const;
     bool valid() const;
-    bool designated_pubkey(data_chunk& designated, std::vector<transaction> previous) const;
+    bool designated_pubkey(ec_public& designated, std::vector<transaction> previous) const;
 
 private:
     static const outpoint find_redeemable_output(const transaction& tx, const ec_private& pk);

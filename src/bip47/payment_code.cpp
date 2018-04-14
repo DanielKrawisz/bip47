@@ -1,6 +1,7 @@
 #include <array>
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
+#include <bitcoin/bitcoin/formats/base_58.hpp>
 
 using namespace libbitcoin;
 
@@ -20,8 +21,10 @@ payment_code::payment_code(uint8_t version, hd_public pubkey, bool bitmessage_no
     }
 }
 
-// TODO
-payment_code::payment_code(const data_chunk data) {}
+payment_code::payment_code(const data_chunk data) {
+    if (data.size() != 80) payment_code();
+    std::copy(data.begin(), data.end(), code.begin());
+}
 
 uint8_t inline payment_code::operator[] (const int index) const {
     return code[index];
@@ -37,7 +40,7 @@ bool inline payment_code::valid() const {
     return true;
 }
 
-bool payment_code::bitmessage_notification() const {
+bool inline payment_code::bitmessage_notification() const {
     return code[1] && 1 == 1;
 }
 
@@ -64,11 +67,26 @@ const payment_code payment_code::mask(const ec_private& pk, const ec_compressed&
     return masked;
 }
 
-/*std::string payment_code::base58_check_encode(const payment_code& code) {
+// TODO do I have to add extra digits or anything?
+std::string inline payment_code::base58_encode(const payment_code& code) const {
+    return libbitcoin::encode_base58(code);
 }
 
-payment_code payment_code::base58_check_decode(std::string string) {
-    
-}*/
+bool inline payment_code::base58_decode(payment_code& pc, std::string string) {
+    return libbitcoin::decode_base58<payment_code_size>(pc.code, string);
+}
+
+payment_code::payment_code() {}
+
+void payment_code::invalidate() {
+    code[0] = 0;
+}
+
+const payment_code inline payment_code::base58_decode(std::string string) {
+    payment_code pc;
+    // Ensure code is invalid if we cannot decode from base 58.
+    if (!base58_decode(pc, string)) pc.invalidate();
+    return pc;
+}
 
 }

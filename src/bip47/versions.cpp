@@ -51,8 +51,8 @@ bool notification_to(payment_code* payload, const transaction& tx, const address
     return false;
 }
 
-bool inline designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
-    return designated_pubkey(out, previous, nt);
+bool inline designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt) {
+    return bip47::designated_pubkey(out, previous, nt);
 }
 
 } // v1
@@ -85,8 +85,8 @@ bool v2::valid(const transaction& tx)
     return false;
 }
 
-bool inline v2::designated_pubkey(data_chunk& out, const std::vector<transaction>& previous, const transaction& nt) {
-    return designated_pubkey(out, previous, nt);
+bool inline v2::designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt) {
+    return bip47::designated_pubkey(out, previous, nt);
 }
 
 bool is_bip47_v3_multisig_pattern(const machine::operation::list& ops);

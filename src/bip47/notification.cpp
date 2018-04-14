@@ -56,19 +56,19 @@ bool notification::valid() const {
     return valid(tx);
 }
 
-bool designated_pubkey_by_version(data_chunk &designated, std::vector<transaction> previous, const transaction& tx, uint8_t version);
+bool designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, uint8_t version);
 
-bool inline designated_pubkey_by_version(data_chunk &designated, std::vector<transaction> previous, const transaction& tx, int version) {
+bool inline designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, int version) {
     if (version == 1) return v1::designated_pubkey(designated, previous, tx);
     if (version == 2) return v2::designated_pubkey(designated, previous, tx);
     return false;
 }
     
-bool notification::designated_pubkey(data_chunk &designated, std::vector<transaction> previous, const transaction& tx) {
+bool notification::designated_pubkey(ec_public &designated, std::vector<transaction> previous, const transaction& tx) {
     return designated_pubkey_by_version(designated, previous, tx, notification::version(tx));
 }
     
-bool notification::designated_pubkey(data_chunk &designated, std::vector<transaction> previous) const {
+bool notification::designated_pubkey(ec_public &designated, std::vector<transaction> previous) const {
     return designated_pubkey_by_version(designated, previous, tx, notification::version(tx));
 }
 

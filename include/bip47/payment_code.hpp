@@ -24,7 +24,7 @@ struct payment_code {
 public:
     payment_code(const libbitcoin::byte_array<payment_code_size> code);
     payment_code(uint8_t version, hd_public pubkey, bool bitmessage_notification);
-    payment_code(const data_chunk data);
+    payment_code(const data_chunk);
     
     bool valid() const;
 
@@ -36,17 +36,20 @@ public:
     
     address address(uint8_t version) const;
 
-    hd_public address_to(const payment_code& to, unsigned int n) const;
+    hd_public address_to(const payment_code&, unsigned int address_number) const;
     
-    const payment_code mask(const ec_private& pk, const ec_compressed& point, const outpoint& outpoint) const;
+    const payment_code mask(const ec_private&, const ec_compressed& point, const outpoint& outpoint) const;
 
-    std::string base58_encode(const payment_code& code) const;
+    std::string base58_encode(const payment_code&) const;
 
-    static payment_code base58_decode(std::string);
+    static const payment_code base58_decode(std::string string);
     
-    uint8_t operator[] (const int index) const;
+    uint8_t operator[] (const int) const;
 private:
+    payment_code();
+    void invalidate();
     void mask_payment_code(libbitcoin::long_hash);
+    static bool base58_decode(payment_code& code, std::string string);
     libbitcoin::byte_array<payment_code_size> code;
 };
 

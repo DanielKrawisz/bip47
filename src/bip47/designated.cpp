@@ -1,20 +1,16 @@
-#include <bip47/patterns.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bitcoin/bitcoin/chain/script.hpp>
+#include <bip47/patterns.hpp>
 
 namespace bip47
 {
     
 typedef libbitcoin::chain::transaction transaction;
+typedef libbitcoin::wallet::ec_public ec_public;
 typedef libbitcoin::data_chunk data_chunk;
 
 bool extract_designated_pubkey(
-    data_chunk& out,
-    const libbitcoin::machine::operation::list& input,
-    const libbitcoin::machine::operation::list& prevout_script);
-
-bool extract_designated_pubkey(
-    data_chunk& out,
+    ec_public& out,
     const libbitcoin::machine::operation::list& input,
     const libbitcoin::machine::operation::list& prevout_script)
 {
@@ -71,7 +67,7 @@ bool extract_designated_pubkey(
 
 // The previous transactions are not necessarily given in order.
 bool designated_pubkey(
-    data_chunk& out,
+    ec_public& out,
     const std::vector<transaction>& previous, 
     const transaction& nt)
 {

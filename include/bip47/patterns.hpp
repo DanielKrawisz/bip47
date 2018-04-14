@@ -1,5 +1,5 @@
-#ifndef BIP47_PAYMENT_CODE_HPP
-#define BIP47_PAYMENT_CODE_HPP
+#ifndef BIP47_PATTERNS_HPP
+#define BIP47_PATTERNS_HPP
 
 #include <bitcoin/bitcoin/machine/operation.hpp>
 
