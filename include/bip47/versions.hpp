@@ -10,6 +10,7 @@ namespace bip47
 typedef libbitcoin::chain::output output;
 typedef libbitcoin::chain::transaction transaction;
 typedef libbitcoin::wallet::ec_public ec_public;
+typedef libbitcoin::ec_uncompressed ec_uncompressed;
 
 namespace v1
 {
@@ -68,17 +69,10 @@ bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous,
 } // v2
 
 namespace v3
-{
-const transaction notify(
-    const payment_code& alice, 
-    const payment_code& bob,  
-    const outpoint& prior, 
-    const ec_private& designated,
-    address_format format,
-    unsigned int amount,
-    const transaction::outs other_outputs);
+{  
 
-bool valid_notification(const transaction &tx);
+bool notification_to(const ec_uncompressed* payload, const transaction& tx, const ec_compressed& bob_id);
+
 } // v3
 
 } // bip47

@@ -6,11 +6,11 @@
 namespace bip47
 {
     
-inline const output pay(const payment_code& to, unsigned int amount, address_format format) {
+const inline output pay(const payment_code& to, unsigned int amount, address_format format) {
     return output(amount, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_key_hash_pattern(to.notification_address(format))));
 }
 
-inline const bool to(const output& output, const address& notification_address) {
+const inline bool to(const output& output, const address& notification_address) {
     const auto ops = output.script().operations();
     return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == notification_address);
 }
@@ -26,7 +26,7 @@ const bool payload(payment_code& out, const output& output) {
 namespace v1
 {
 
-inline const output notification_output(
+const inline output notification_output(
     const payment_code& alice,
     const payment_code& bob,
     const outpoint& prior, 
@@ -34,9 +34,9 @@ inline const output notification_output(
     return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior))));
 }
 
-inline bool is_notification_output(const output& output) {
+bool inline is_notification_output(const output& output) {
     const auto ops = output.script().operations();
-    return libbitcoin::chain::script::is_pay_null_data_pattern(ops)) && ops[1].data().size() == 80;
+    return libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == 80;
 }
 
 const transaction notify(
@@ -59,18 +59,18 @@ const transaction notify(
     return transaction(1, 0, {}, outputs);
 }
 
-inline bool notification_payload(payment_code& payload, const transaction& tx) {
+bool inline notification_payload(payment_code& payload, const transaction& tx) {
     for (auto output : tx.outputs()) if (bip47::payload(payload, output)) return true;
     return false;
 }
 
-inline bool valid_notification(const transaction& tx)
+bool inline valid_notification(const transaction& tx)
 {
     for (auto output : tx.outputs()) if (is_notification_output(output)) return true;
     return false;
 }
 
-bool notification_to(const transaction& tx, const address& notification_address) {
+bool inline notification_to(const transaction& tx, const address& notification_address) {
     for (auto output : tx.outputs()) if (to(output, notification_address)) return true;     
     return false;
 }
@@ -95,16 +95,22 @@ bool is_notification_change_output_pattern(const libbitcoin::machine::operation:
     return true;
 }
 
+bool inline identifier_equals(const ec_compressed &x, const data_chunk& y) {
+    if (y.size() != libbitcoin::ec_compressed_size) return false;
+    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) if (x[i] != y[i]) return false;
+    return true;
+}
+
 namespace v2
 {
 
-void identifier(ec_compressed& id, const payment_code& code) {
+void inline identifier(ec_compressed& id, const payment_code& code) {
     auto hash = libbitcoin::sha256_hash(code);
     id[0] = 0x02;
     std::copy(hash.begin(), hash.end(), id.at(1));
 }
 
-inline bool is_notification_change_output(const output& output) {
+bool inline is_notification_change_output(const output& output) {
     return is_notification_change_output_pattern(output.script().operations());
 }
 
@@ -144,10 +150,9 @@ bool valid_notification(const transaction& tx) {
     return false;
 }
 
-inline const bool is_notification_change_output_to(const output& output, const ec_compressed& bob_id) {
+const inline bool is_notification_change_output_to(const output& output, const ec_compressed& bob_id) {
     if (!is_notification_change_output(output)) return false;
-    auto data = output.script().operations()[1].data();
-    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) if (data[i] != bob_id[i]) return false;
+    identifier_equals(bob_id, output.script().operations()[1].data());
     return true;
 }
 
@@ -157,7 +162,7 @@ bool notification_to(const transaction& tx, const ec_compressed& bob_id) {
     return false;
 }
 
-inline bool notification_payload(payment_code& payload, const transaction& tx) {
+bool inline notification_payload(payment_code& payload, const transaction& tx) {
     return v1::notification_payload(payload, tx);
 }
 
@@ -167,7 +172,10 @@ bool inline designated_pubkey(ec_public& out, const std::vector<transaction>& pr
 
 } // v2
 
-bool is_bip47_v3_multisig_pattern(const libbitcoin::machine::operation::list& ops) {
+namespace v3
+{
+
+bool is_notification_pattern(const libbitcoin::machine::operation::list& ops) {
     if (libbitcoin::chain::script::is_pay_multisig_pattern(ops)) {
         return false;
     }
@@ -178,22 +186,34 @@ bool is_bip47_v3_multisig_pattern(const libbitcoin::machine::operation::list& op
     
     // Are the first two keys compressed? 
     if (ops[1].data().size() != libbitcoin::ec_compressed_size) return false;
-    if (ops[1].data().size() != libbitcoin::ec_compressed_size) return false;
+    if (ops[2].data().size() != libbitcoin::ec_compressed_size) return false;
     
     // Is the last key uncompressed? 
-    if (ops[1].data().size() != libbitcoin::ec_uncompressed_size) return false;
+    if (ops[3].data().size() != libbitcoin::ec_uncompressed_size) return false;
+    
+    // TODO Is ordering important? 
     
     return true;
 }
 
-bool v3::valid_notification(const transaction& tx)
+bool inline is_notification_output(const output& output) {
+    return is_notification_pattern(output.script().operations());
+}
+
+bool notification_to(const ec_uncompressed* payload, const transaction& tx, const ec_compressed& bob_id)
 {
-    for (auto output : tx.outputs()) {
-        const auto ops = output.script().operations();
-        if (!is_bip47_v3_multisig_pattern(ops)) return false;
+    for (auto output : tx.outputs()) if (is_notification_output(output)) {
+        auto ops = output.script().operations();
+        
+        if (identifier_equals(bob_id, ops[1].data())) {
+            if (payload != 0) std::copy(ops[3].data().begin(), ops[3].data().end(), payload->begin());
+            return true;
+        }
     }
     
-    return true;
+    return false;
 }
 
-}
+} // v3
+
+} // bip47

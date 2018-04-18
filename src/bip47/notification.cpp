@@ -8,7 +8,7 @@ namespace bip47
 payment_code_version notification::version(const transaction& tx) {
     if (v1::valid_notification(tx)) return 1;
     if (v2::valid_notification(tx)) return 2;
-    if (v3::valid_notification(tx)) return 3;
+    //if (v3::valid_notification(tx)) return 3;
     return 0;
 }
     
@@ -27,7 +27,7 @@ transaction notify_by_version(
     const std::vector<output> other_outputs)
 {
     if (!to_be_redeemed.is_valid()) return transaction();
-    if (version == 3) return v3::notify(alice, bob, to_be_redeemed, designated, format, amount, other_outputs);
+    //if (version == 3) return v3::notify(alice, bob, to_be_redeemed, designated, format, amount, other_outputs);
     if (version == 2) return v2::notify(alice, bob, to_be_redeemed, designated, amount, other_outputs);
     if (version == 1) return v1::notify(alice, bob, to_be_redeemed, designated, format, amount, other_outputs);
     return transaction();
