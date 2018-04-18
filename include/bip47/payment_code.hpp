@@ -38,8 +38,8 @@ struct payment_code {
 
     bool bitmessage_notification() const;
 
-    const ec_compressed& point() const;
-    const hd_chain_code& chain_code() const;
+    const ec_compressed point() const;
+    const hd_chain_code chain_code() const;
     
     const address notification_address(address_format format) const;
     

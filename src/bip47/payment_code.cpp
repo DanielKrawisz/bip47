@@ -45,13 +45,35 @@ bool inline payment_code::bitmessage_notification() const {
     return code[1] && 1 == 1;
 }
 
+const ec_compressed payment_code::point() const {
+    ec_compressed k;
+    std::copy(code.at(2), code.at(36), k.begin());
+    return k;
+}
+
+const hd_chain_code payment_code::chain_code() const {
+    hd_chain_code k;
+    std::copy(code.at(36), code.at(68), k.begin());
+    return k;
+}
+
 // TODO
 libbitcoin::wallet::hd_public to_hd_public(const ec_compressed& point, const hd_chain_code& chain_code) {
     return libbitcoin::wallet::hd_public();
 }
 
-inline const address payment_code::notification_address(address_format format) const {
+const address inline payment_code::notification_address(address_format format) const {
     return libbitcoin::wallet::ec_public(to_hd_public(point(), chain_code()).derive_public(0).point()).to_payment_address(format);
+}
+
+// TODO
+const hd_public payment_code::pubkey(unsigned int n) const {
+    return {};
+}
+
+// TODO
+const hd_public payment_code::change(unsigned int n) const {
+    return {};
 }
 
 // TODO
@@ -82,7 +104,7 @@ bool inline payment_code::base58_decode(payment_code& pc, std::string string) {
 
 inline payment_code::payment_code() {}
 
-void payment_code::invalidate() {
+void inline payment_code::invalidate() {
     code[0] = 0;
 }
 

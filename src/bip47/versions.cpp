@@ -14,6 +14,14 @@ inline const bool to(const output& output, const address& notification_address) 
     const auto ops = output.script().operations();
     return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == notification_address);
 }
+
+const bool payload(payment_code& out, const output& output) {
+    const auto ops = output.script().operations();
+    if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops)) return false;
+    if (ops[1].data().size() != 80) return false;
+    out = payment_code(ops[1].data());
+    return true;
+}
     
 namespace v1
 {
@@ -24,6 +32,11 @@ inline const output notification_output(
     const outpoint& prior, 
     const ec_private& designated) {
     return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior))));
+}
+
+inline bool is_notification_output(const output& output) {
+    const auto ops = output.script().operations();
+    return libbitcoin::chain::script::is_pay_null_data_pattern(ops)) && ops[1].data().size() == 80;
 }
 
 const transaction notify(
@@ -46,33 +59,19 @@ const transaction notify(
     return transaction(1, 0, {}, outputs);
 }
 
-bool extract_payload(payment_code* payload, const transaction& tx);
-
-bool extract_payload(payment_code* payload, const transaction& tx)
-{
-    for (auto output : tx.outputs()) {
-        const auto ops = output.script().operations();
-        if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops)) continue;
-        if (ops[1].data().size() == 80) {
-            if (payload != 0) *payload = ops[1].data();
-            return true;
-        }
-    }
-    
+inline bool notification_payload(payment_code& payload, const transaction& tx) {
+    for (auto output : tx.outputs()) if (bip47::payload(payload, output)) return true;
     return false;
 }
 
-bool inline valid_notification(const transaction& tx)
+inline bool valid_notification(const transaction& tx)
 {
-    return extract_payload(0, tx);
+    for (auto output : tx.outputs()) if (is_notification_output(output)) return true;
+    return false;
 }
 
-bool notification_to(payment_code* payload, const transaction& tx, const address& recipient) {
-    for (auto output : tx.outputs()) {
-        const auto ops = output.script().operations();
-        if (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == recipient) return extract_payload(payload, tx);
-    }
-    
+bool notification_to(const transaction& tx, const address& notification_address) {
+    for (auto output : tx.outputs()) if (to(output, notification_address)) return true;     
     return false;
 }
 
@@ -90,8 +89,8 @@ bool is_notification_change_output_pattern(const libbitcoin::machine::operation:
     // Are we talking about a 1 of 2 multisig? 
     if (static_cast<uint8_t>(ops[0].code()) != 1) return false;
     if (static_cast<uint8_t>(ops[ops.size() - 2].code()) != 2) return false;
-    
-    // TODO I don't know if anything else goes in here. 
+    if (ops[1].data().size() != libbitcoin::ec_compressed_size) return false;
+    if (ops[2].data().size() != libbitcoin::ec_compressed_size) return false;
     
     return true;
 }
@@ -143,6 +142,23 @@ bool valid_notification(const transaction& tx) {
     }
     
     return false;
+}
+
+inline const bool is_notification_change_output_to(const output& output, const ec_compressed& bob_id) {
+    if (!is_notification_change_output(output)) return false;
+    auto data = output.script().operations()[1].data();
+    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) if (data[i] != bob_id[i]) return false;
+    return true;
+}
+
+bool notification_to(const transaction& tx, const ec_compressed& bob_id) {
+    if (!v1::valid_notification(tx)) return false;
+    for (auto output : tx.outputs()) if (is_notification_change_output_to(output, bob_id)) return true;
+    return false;
+}
+
+inline bool notification_payload(payment_code& payload, const transaction& tx) {
+    return v1::notification_payload(payload, tx);
 }
 
 bool inline designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt) {

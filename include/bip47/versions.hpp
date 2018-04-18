@@ -20,6 +20,8 @@ const output notification_output(
     const outpoint& prior, 
     const ec_private& designated);
 
+bool is_notification_output(const output& output);
+
 const transaction notify(
     const payment_code& alice, 
     const payment_code& bob, 
@@ -31,7 +33,9 @@ const transaction notify(
 
 bool valid_notification(const transaction &tx);
 
-bool notification_to(payment_code* payload, const transaction& tx, const address& recipient);
+bool notification_to(const transaction& tx, const address& notification_address);
+
+bool notification_payload(payment_code& payload, const transaction& tx);
     
 bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt);
 } // v1
@@ -55,7 +59,9 @@ const transaction notify(
 
 bool valid_notification(const transaction &tx);
 
-bool notification_to(payment_code* payload, const transaction& tx, const address& recipient);
+bool notification_to(const transaction& tx, const ec_compressed& bob_id);
+
+bool notification_payload(payment_code& payload, const transaction& tx);
 
 bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt);
 
