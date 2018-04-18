@@ -29,6 +29,8 @@ bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous,
 
 namespace v2
 {
+void identifier(ec_compressed& key, const payment_code& code);
+    
 const transaction notify(
     const payment_code& from, 
     const ec_compressed& to, 

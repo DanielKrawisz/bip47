@@ -1,5 +1,6 @@
 #include <bip47/versions.hpp>
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
+#include <bitcoin/bitcoin/math/hash.hpp>
 #include "designated.cpp"
 
 namespace bip47
@@ -71,6 +72,12 @@ bool is_bip47_v2_multisig_pattern(const machine::operation::list& ops) {
     // TODO I don't know if anything else goes in here. 
     
     return true;
+}
+
+void v2::identifier(ec_compressed& key, const payment_code& code) {
+    auto hash = libbitcoin::sha256_hash(code);
+    key[0] = 0x02;
+    std::copy(hash.begin(), hash.end(), key.at(1));
 }
 
 bool v2::valid(const transaction& tx)
