@@ -41,9 +41,11 @@ struct payment_code {
     const ec_compressed& point() const;
     const hd_chain_code& chain_code() const;
     
+    const address notification_address(address_format format) const;
+    
     const hd_public pubkey(unsigned int n) const;
     
-    const address notification_address(address_format format) const;
+    const hd_public change(unsigned int n) const;
     
     const payment_code mask(const ec_private&, const ec_compressed& point, const outpoint& outpoint) const;
 

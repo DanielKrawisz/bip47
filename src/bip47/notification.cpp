@@ -18,8 +18,8 @@ bool notification::valid(const transaction& tx) {
 
 transaction notify_by_version(
     const payment_code_version version, 
-    const payment_code& from, 
-    const payment_code& to,
+    const payment_code& alice, 
+    const payment_code& bob,
     const outpoint& to_be_redeemed, 
     const ec_private& designated,
     address_format format,
@@ -27,23 +27,23 @@ transaction notify_by_version(
     const std::vector<output> other_outputs)
 {
     if (!to_be_redeemed.is_valid()) return transaction();
-    if (version == 3) return v3::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
-    if (version == 2) return v2::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
-    if (version == 1) return v1::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
+    if (version == 3) return v3::notify(alice, bob, to_be_redeemed, designated, format, amount, other_outputs);
+    if (version == 2) return v2::notify(alice, bob, to_be_redeemed, designated, amount, other_outputs);
+    if (version == 1) return v1::notify(alice, bob, to_be_redeemed, designated, format, amount, other_outputs);
     return transaction();
 }
     
 const transaction notification::notify(
-    const payment_code& from, 
-    const payment_code& to, 
+    const payment_code& alice, 
+    const payment_code& bob, 
     const transaction& prior, 
     const ec_private& designated,
     address_format format,
     unsigned int amount,
     const transaction::outs other_outputs)
 {
-    transaction nt = notify_by_version(to.version(), from, to, find_redeemable_output(prior, designated), designated, format, amount, other_outputs);
-   if (nt.is_valid()) {
+    transaction nt = notify_by_version(bob.version(), alice, bob, find_redeemable_output(prior, designated), designated, format, amount, other_outputs);
+    if (nt.is_valid()) {
         // TODO sign transaction.
     }
 

@@ -19,8 +19,8 @@ public:
     static bool designated_pubkey(ec_public& designated, std::vector<transaction> previous, const transaction& nt);
     
     static const transaction notify(
-        const payment_code& from, 
-        const payment_code& to, 
+        const payment_code& alice, 
+        const payment_code& bob, 
         const transaction& prior, 
         const ec_private& designated,
         address_format format,
