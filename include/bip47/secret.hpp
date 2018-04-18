@@ -6,14 +6,14 @@
 
 namespace bip47
 {
-    
-typedef libbitcoin::wallet::hd_private hd_private;
 
 struct secret {
 public:
-    secret(int version, const hd_private& key, bool bitmessage_notification);
+    secret(uint8_t version, const ec_private& pk, const hd_chain_code& chain_code, bool bitmessage_notification);
+
+    const address next_address(unsigned int& n, const payment_code& to) const;
     
-    const hd_private& key;
+    const ec_private& key;
     const payment_code code;
 };
 

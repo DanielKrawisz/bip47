@@ -38,7 +38,7 @@ const transaction notification::notify(
         const ec_private& designated,
         unsigned int amount)
 {
-    transaction nt = notify_by_version(to.version(), from, to.pubkey(), find_redeemable_output(prior, designated), designated, amount);
+    transaction nt = notify_by_version(to.version(), from, to.point(), find_redeemable_output(prior, designated), designated, amount);
     if (nt.is_valid()) {
         // TODO sign transaction.
     }

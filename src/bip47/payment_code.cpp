@@ -2,6 +2,7 @@
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
 #include <bitcoin/bitcoin/formats/base_58.hpp>
+#include <bitcoin/bitcoin/wallet/ec_public.hpp>
 
 using namespace libbitcoin;
 
@@ -10,12 +11,12 @@ namespace bip47
     
 payment_code::payment_code(const libbitcoin::byte_array<payment_code_size> code):code(code) {}
 
-payment_code::payment_code(uint8_t version, hd_public pubkey, bool bitmessage_notification) {
+payment_code::payment_code(uint8_t version, const ec_compressed& point, const hd_chain_code& chain_code, bool bitmessage_notification) {
     if (version < 1 && version > 3) return;
     code[0] = version;
     code[1] = bitmessage_notification;
-    std::copy(pubkey.point().begin(), pubkey.point().end(), code.at(2));
-    std::copy(pubkey.chain_code().begin(), pubkey.chain_code().end(), code.at(2));
+    std::copy(std::begin(point), std::end(point), code.at(2));
+    std::copy(std::begin(chain_code), std::end(chain_code), code.at(2));
     for (int i = 67; i < payment_code_size; i ++) {
         code[i] = 0;
     }
@@ -45,12 +46,15 @@ bool inline payment_code::bitmessage_notification() const {
 }
 
 // TODO
-/*hd_public pubkey() const;
+libbitcoin::wallet::hd_public to_hd_public(const ec_compressed& point, const hd_chain_code& chain_code);
 
-address address_to(uint8_t version) const;
+libbitcoin::wallet::hd_public to_hd_public(const ec_compressed& point, const hd_chain_code& chain_code) {
+    
+}
 
-hd_public address_to(const payment_code& to, unsigned int n) const;
-*/
+address payment_code::notification_address() const {
+    return libbitcoin::wallet::ec_public(to_hd_public(point(), chain_code()).derive_public(0).point()).to_payment_address();
+}
 
 // TODO
 const libbitcoin::long_hash payment_code_mask(const ec_private& pk, const ec_compressed& point, const outpoint& outpoint); 

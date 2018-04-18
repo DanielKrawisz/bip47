@@ -12,7 +12,7 @@ namespace bip47
 {
     
 typedef libbitcoin::ec_compressed ec_compressed;
-typedef libbitcoin::wallet::hd_public hd_public;
+typedef libbitcoin::wallet::hd_chain_code hd_chain_code;
 typedef libbitcoin::chain::output_point outpoint;
 typedef libbitcoin::wallet::ec_private ec_private;
 typedef libbitcoin::wallet::payment_address address;
@@ -20,11 +20,15 @@ typedef libbitcoin::data_chunk data_chunk;
 
 const int payment_code_size = 80;
 
+struct hd_public {
+    const ec_compressed point;
+    const hd_chain_code chain_code;
+};
+
 struct payment_code {
-public:
     payment_code(const libbitcoin::byte_array<payment_code_size> code);
-    payment_code(uint8_t version, hd_public pubkey, bool bitmessage_notification);
-    payment_code(const data_chunk);
+    payment_code(uint8_t version, const ec_compressed& point, const hd_chain_code& chain_code, bool bitmessage_notification);
+    payment_code(const data_chunk data);
     
     bool valid() const;
 
@@ -32,11 +36,12 @@ public:
 
     bool bitmessage_notification() const;
 
-    hd_public pubkey() const;
+    const ec_compressed& point() const;
+    const hd_chain_code& chain_code() const;
     
-    address address(uint8_t version) const;
-
-    hd_public address_to(const payment_code&, unsigned int address_number) const;
+    const hd_public pubkey(unsigned int n) const;
+    
+    address notification_address() const;
     
     const payment_code mask(const ec_private&, const ec_compressed& point, const outpoint& outpoint) const;
 
