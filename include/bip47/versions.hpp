@@ -4,24 +4,32 @@
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bip47/payment_code.hpp>
 
-using namespace libbitcoin;
-
 namespace bip47
 {
 
+typedef libbitcoin::chain::output output;
 typedef libbitcoin::chain::transaction transaction;
 typedef libbitcoin::wallet::ec_public ec_public;
 
 namespace v1
 {
+
+const output notification_output(
+    const payment_code& from,
+    const payment_code& to,
+    const outpoint& prior, 
+    const ec_private& designated);
+
 const transaction notify(
     const payment_code& from, 
-    const ec_compressed& to, 
+    const payment_code& to, 
     const outpoint& prior, 
-    const ec_private& designated, 
-    unsigned int amount);
+    const ec_private& designated,
+    address_format format,
+    unsigned int amount,
+    const transaction::outs other_outputs);
 
-bool valid(const transaction &tx);
+bool valid_notification(const transaction &tx);
 bool notification_to(payment_code* payload, const transaction& tx, const address& recipient);
     
 bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt);
@@ -33,12 +41,14 @@ void identifier(ec_compressed& key, const payment_code& code);
     
 const transaction notify(
     const payment_code& from, 
-    const ec_compressed& to, 
+    const payment_code& to, 
     const outpoint& prior, 
-    const ec_private& designated, 
-    unsigned int amount);
+    const ec_private& designated,
+    address_format format,
+    unsigned int amount,
+    const transaction::outs other_outputs);
 
-bool valid(const transaction &tx);
+bool valid_notification(const transaction &tx);
 bool notification_to(payment_code* payload, const transaction& tx, const address& recipient);
 
 bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous, const transaction& nt);
@@ -48,12 +58,14 @@ namespace v3
 {
 const transaction notify(
     const payment_code& from, 
-    const ec_compressed& to, 
+    const payment_code& to,  
     const outpoint& prior, 
-    const ec_private& designated, 
-    unsigned int amount);
+    const ec_private& designated,
+    address_format format,
+    unsigned int amount,
+    const transaction::outs other_outputs);
 
-bool valid(const transaction &tx);
+bool valid_notification(const transaction &tx);
 } // v3
 
 } // bip47

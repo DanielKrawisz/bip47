@@ -14,7 +14,9 @@ public:
     const address next_address(unsigned int& n, const payment_code& to) const;
     
     const ec_private& key;
-    const payment_code code;
+    const payment_code& pubcode();
+private:
+    payment_code code;
 };
 
 } // bip47

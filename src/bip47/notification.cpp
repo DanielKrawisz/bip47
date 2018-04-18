@@ -5,10 +5,10 @@
 namespace bip47
 {
     
-uint8_t notification::version(const transaction& tx) {
-    if (v1::valid(tx)) return 1;
-    if (v2::valid(tx)) return 2;
-    if (v3::valid(tx)) return 3;
+payment_code_version notification::version(const transaction& tx) {
+    if (v1::valid_notification(tx)) return 1;
+    if (v2::valid_notification(tx)) return 2;
+    if (v3::valid_notification(tx)) return 3;
     return 0;
 }
     
@@ -17,36 +17,40 @@ bool notification::valid(const transaction& tx) {
 }
 
 transaction notify_by_version(
-    const uint8_t version, 
+    const payment_code_version version, 
     const payment_code& from, 
-    const hd_public& to,
+    const payment_code& to,
     const outpoint& to_be_redeemed, 
     const ec_private& designated,
-    const unsigned int amount)
+    address_format format,
+    const unsigned int amount,
+    const std::vector<output> other_outputs)
 {
     if (!to_be_redeemed.is_valid()) return transaction();
-    if (version == 3) return v3::notify(from, to, to_be_redeemed, designated, amount);
-    if (version == 2) return v2::notify(from, to, to_be_redeemed, designated, amount);
-    if (version == 1) return v1::notify(from, to, to_be_redeemed, designated, amount);
+    if (version == 3) return v3::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
+    if (version == 2) return v2::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
+    if (version == 1) return v1::notify(from, to, to_be_redeemed, designated, format, amount, other_outputs);
     return transaction();
 }
     
 const transaction notification::notify(
-        const payment_code& from, 
-        const payment_code& to, 
-        const transaction& prior, 
-        const ec_private& designated,
-        unsigned int amount)
+    const payment_code& from, 
+    const payment_code& to, 
+    const transaction& prior, 
+    const ec_private& designated,
+    address_format format,
+    unsigned int amount,
+    const transaction::outs other_outputs)
 {
-    transaction nt = notify_by_version(to.version(), from, to.point(), find_redeemable_output(prior, designated), designated, amount);
-    if (nt.is_valid()) {
+    transaction nt = notify_by_version(to.version(), from, to, find_redeemable_output(prior, designated), designated, format, amount, other_outputs);
+   if (nt.is_valid()) {
         // TODO sign transaction.
     }
 
     return nt;
 }
 
-notification::notification(const chain::transaction &tx):tx(tx) {}
+notification::notification(const transaction &tx):tx(tx) {}
 
 int notification::version() const {
     return version(tx);
@@ -56,9 +60,9 @@ bool notification::valid() const {
     return valid(tx);
 }
 
-bool designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, uint8_t version);
+bool designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, payment_code_version version);
 
-bool inline designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, int version) {
+bool inline designated_pubkey_by_version(ec_public &designated, std::vector<transaction> previous, const transaction& tx, payment_code_version version) {
     if (version == 1) return v1::designated_pubkey(designated, previous, tx);
     if (version == 2) return v2::designated_pubkey(designated, previous, tx);
     return false;
