@@ -71,9 +71,15 @@ namespace v3
 
 bool is_notification_output(const output& output);
 
-const output notification_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount);
+const output notification_output(
+    const ec_private& designated
+    const payment_code& bob, 
+    unsigned int amount, 
+    const outpoint& prior);
 
 bool notification_to(const ec_uncompressed* payload, const transaction& tx, const ec_compressed& bob_id);
+
+bool valid_notification(const transaction &tx);
 
 } // v3
 

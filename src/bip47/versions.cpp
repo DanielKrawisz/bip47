@@ -193,11 +193,10 @@ bool inline is_notification_output(const output& output) {
 }
 
 output inline notification_output(
-    const payment_code& alice, 
+    const ec_private& designated
     const payment_code& bob, 
     unsigned int amount, 
-    const outpoint& prior, 
-    const ec_private& designated) {
+    const outpoint& prior) {
     // TODO randomization/ordering policy? 
     return output(amount,
         libbitcoin::chain::to_pay_multisig_pattern(1,

@@ -2,13 +2,12 @@
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
 #include <bitcoin/bitcoin/formats/base_58.hpp>
+#include <bitcoin/bitcoin/math/checksum.hpp>
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
-
-using namespace libbitcoin;
 
 namespace bip47
 {
-    
+
 payment_code::payment_code(const libbitcoin::byte_array<payment_code_size> code):code(code) {}
 
 payment_code::payment_code(payment_code_version version, const ec_compressed& point, const hd_chain_code& chain_code, bool bitmessage_notification) {
@@ -93,7 +92,7 @@ const payment_code payment_code::mask(const ec_private& pk, const ec_compressed&
     return masked;
 }
 
-ec_compressed payment_code::identifier() {
+const ec_compressed payment_code::identifier() {
     ec_compressed id;
     auto hash = libbitcoin::sha256_hash(code);
     id[0] = 0x02;
@@ -103,11 +102,18 @@ ec_compressed payment_code::identifier() {
 
 // TODO do I have to add extra digits or anything?
 std::string inline payment_code::base58_encode(const payment_code& code) const {
-    return libbitcoin::encode_base58(code);
+    auto data = libbitcoin::to_chunk(code);
+    libbitcoin::append_checksum(data);
+    return libbitcoin::encode_base58(data);
 }
 
 bool inline payment_code::base58_decode(payment_code& pc, std::string string) {
-    return libbitcoin::decode_base58<payment_code_size>(pc.code, string);
+    auto data = to_chunk(libbitcoin::decode_base58<payment_code_size>(pc.code, string));
+    if (libbitcoin::verify_checksum(data)) {
+        pc = payment_code(data);
+        return true;
+    }
+    return false;
 }
 
 inline payment_code::payment_code() {}
