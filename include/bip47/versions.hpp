@@ -44,11 +44,9 @@ bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous,
 namespace v2
 {
 
-void identifier(ec_compressed& id, const payment_code& bob);
-
 bool is_notification_change_output(const output& output);
 
-output notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount);
+const output notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount);
     
 const transaction notify(
     const payment_code& alice, 
@@ -70,6 +68,10 @@ bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous,
 
 namespace v3
 {  
+
+bool is_notification_output(const output& output);
+
+const output notification_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount);
 
 bool notification_to(const ec_uncompressed* payload, const transaction& tx, const ec_compressed& bob_id);
 

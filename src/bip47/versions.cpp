@@ -104,21 +104,13 @@ bool inline identifier_equals(const ec_compressed &x, const data_chunk& y) {
 namespace v2
 {
 
-void inline identifier(ec_compressed& id, const payment_code& code) {
-    auto hash = libbitcoin::sha256_hash(code);
-    id[0] = 0x02;
-    std::copy(hash.begin(), hash.end(), id.at(1));
-}
-
 bool inline is_notification_change_output(const output& output) {
     return is_notification_change_output_pattern(output.script().operations());
 }
 
-output notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount) {
-    ec_compressed bob_id;
-    identifier(bob_id, bob);
+output inline notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount) {
     // TODO randomization/ordering policy? 
-    return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob_id}));
+    return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob.identifier()}));
 }
 
 const transaction notify(
@@ -198,6 +190,20 @@ bool is_notification_pattern(const libbitcoin::machine::operation::list& ops) {
 
 bool inline is_notification_output(const output& output) {
     return is_notification_pattern(output.script().operations());
+}
+
+output inline notification_output(
+    const payment_code& alice, 
+    const payment_code& bob, 
+    unsigned int amount, 
+    const outpoint& prior, 
+    const ec_private& designated) {
+    // TODO randomization/ordering policy? 
+    return output(amount,
+        libbitcoin::chain::to_pay_multisig_pattern(1,
+            {libbitcoin::to_chunk(designated.to_public()),
+                libbitcoin::to_chunk(bob.identifier()),
+                alice.mask(designated, bob.point(), prior).hd_public_key().data()}));
 }
 
 bool notification_to(const ec_uncompressed* payload, const transaction& tx, const ec_compressed& bob_id)

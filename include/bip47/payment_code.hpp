@@ -25,6 +25,8 @@ const int payment_code_size = 80;
 struct hd_public {
     const ec_compressed point;
     const hd_chain_code chain_code;
+    
+    data_chunk data() const;
 };
 
 struct payment_code {
@@ -40,6 +42,7 @@ struct payment_code {
 
     const ec_compressed point() const;
     const hd_chain_code chain_code() const;
+    const hd_public     hd_public_key() const;
     
     const address notification_address(address_format format) const;
     
@@ -48,6 +51,8 @@ struct payment_code {
     const hd_public change(unsigned int n) const;
     
     const payment_code mask(const ec_private&, const ec_compressed& point, const outpoint& outpoint) const;
+    
+    const ec_compressed identifier() const;
 
     std::string base58_encode(const payment_code&) const;
 

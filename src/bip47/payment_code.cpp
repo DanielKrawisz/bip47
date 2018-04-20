@@ -93,6 +93,14 @@ const payment_code payment_code::mask(const ec_private& pk, const ec_compressed&
     return masked;
 }
 
+ec_compressed payment_code::identifier() {
+    ec_compressed id;
+    auto hash = libbitcoin::sha256_hash(code);
+    id[0] = 0x02;
+    std::copy(hash.begin(), hash.end(), id.at(1));
+    return id;
+}
+
 // TODO do I have to add extra digits or anything?
 std::string inline payment_code::base58_encode(const payment_code& code) const {
     return libbitcoin::encode_base58(code);
