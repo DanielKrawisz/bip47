@@ -19,6 +19,7 @@ typedef libbitcoin::wallet::payment_address address;
 typedef libbitcoin::data_chunk data_chunk;
 typedef uint8_t payment_code_version;
 typedef uint8_t address_format;
+typedef ec_compressed identifier;
 
 const int payment_code_size = 80;
 
@@ -52,7 +53,7 @@ struct payment_code {
     
     const payment_code mask(const ec_private&, const ec_compressed& point, const outpoint& outpoint) const;
     
-    const ec_compressed identifier() const;
+    const identifier identifier() const;
 
     std::string base58_encode(const payment_code&) const;
 

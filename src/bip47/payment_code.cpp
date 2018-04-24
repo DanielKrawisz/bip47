@@ -92,7 +92,7 @@ const payment_code payment_code::mask(const ec_private& pk, const ec_compressed&
     return masked;
 }
 
-const ec_compressed payment_code::identifier() {
+const ec_compressed payment_code::identifier() const {
     ec_compressed id;
     auto hash = libbitcoin::sha256_hash(code);
     id[0] = 0x02;
@@ -108,7 +108,7 @@ std::string inline payment_code::base58_encode(const payment_code& code) const {
 }
 
 bool inline payment_code::base58_decode(payment_code& pc, std::string string) {
-    auto data = to_chunk(libbitcoin::decode_base58<payment_code_size>(pc.code, string));
+    auto data = libbitcoin::to_chunk(libbitcoin::decode_base58<payment_code_size>(pc.code, string));
     if (libbitcoin::verify_checksum(data)) {
         pc = payment_code(data);
         return true;
