@@ -2,7 +2,9 @@
 #define BIP47_PATTERNS_HPP
 
 #include <bitcoin/bitcoin/machine/operation.hpp>
+#include <vector>
 
+// Some patterns that we need do not exist in libbitcoin on their own. 
 namespace libbitcoin
 {
 

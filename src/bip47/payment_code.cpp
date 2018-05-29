@@ -10,12 +10,12 @@ namespace bip47
 
 payment_code::payment_code(const libbitcoin::byte_array<payment_code_size> code):code(code) {}
 
-payment_code::payment_code(payment_code_version version, const ec_compressed& point, const hd_chain_code& chain_code, bool bitmessage_notification) {
+payment_code::payment_code(payment_code_version version, const hd_public& pubkey, bool bitmessage_notification) {
     if (version < 1 && version > 3) return;
     code[0] = version;
     code[1] = bitmessage_notification;
-    std::copy(std::begin(point), std::end(point), code.at(2));
-    std::copy(std::begin(chain_code), std::end(chain_code), code.at(2));
+    std::copy(std::begin(pubkey.point), std::end(pubkey.point), code.at(2));
+    std::copy(std::begin(pubkey.chain_code), std::end(pubkey.chain_code), code.at(2));
     for (int i = 67; i < payment_code_size; i ++) {
         code[i] = 0;
     }
@@ -28,6 +28,10 @@ payment_code::payment_code(const data_chunk data) {
 
 uint8_t inline payment_code::operator[] (int index) const {
     return code[index];
+}
+
+bool inline payment_code::operator== (payment_code pc) const {
+    return code == pc.code;
 }
 
 payment_code_version inline payment_code::version() const {
@@ -56,13 +60,17 @@ const hd_chain_code payment_code::chain_code() const {
     return k;
 }
 
+const hd_public inline payment_code::hd_public_key() const {
+    return {point(), chain_code()};
+}
+
 // TODO
-libbitcoin::wallet::hd_public to_hd_public(const ec_compressed& point, const hd_chain_code& chain_code) {
+libbitcoin::wallet::hd_public to_hd_public(const hd_public& pubkey) {
     return libbitcoin::wallet::hd_public();
 }
 
 const address inline payment_code::notification_address(address_format format) const {
-    return libbitcoin::wallet::ec_public(to_hd_public(point(), chain_code()).derive_public(0).point()).to_payment_address(format);
+    return libbitcoin::wallet::ec_public(to_hd_public(hd_public_key()).derive_public(0).point()).to_payment_address(format);
 }
 
 // TODO
@@ -76,7 +84,7 @@ const hd_public payment_code::change(unsigned int n) const {
 }
 
 // TODO
-const libbitcoin::long_hash payment_code_mask(const ec_private& pk, const ec_compressed& point, const outpoint& outpoint) {
+const libbitcoin::long_hash payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) {
     return libbitcoin::null_long_hash;
 }
 
@@ -85,7 +93,7 @@ void payment_code::mask_payment_code(libbitcoin::long_hash mask) {
     for (int i = 35; i < 67; i++) code[i] = code[i]; // TODO
 }
 
-const payment_code payment_code::mask(const ec_private& pk, const ec_compressed& point, const outpoint& outpoint) const {    
+const payment_code payment_code::mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) const {    
     // mask payment code.
     payment_code masked(code);
     masked.mask_payment_code(payment_code_mask(pk, point, outpoint));
@@ -100,8 +108,7 @@ const ec_compressed payment_code::identifier() const {
     return id;
 }
 
-// TODO do I have to add extra digits or anything?
-std::string inline payment_code::base58_encode(const payment_code& code) const {
+std::string inline payment_code::base58_encode() const {
     auto data = libbitcoin::to_chunk(code);
     libbitcoin::append_checksum(data);
     return libbitcoin::encode_base58(data);

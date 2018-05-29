@@ -41,8 +41,7 @@ bool extract_designated_pubkey(
         return false;
     }
 
-    if (!libbitcoin::chain::script::is_pay_script_hash_pattern(
-            prevout_script)) {
+    if (!libbitcoin::chain::script::is_pay_script_hash_pattern(prevout_script)) {
         return false;
     }
 

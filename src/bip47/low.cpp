@@ -31,6 +31,16 @@ bool inline identifier_equals(const ec_compressed &x, const data_chunk& y) {
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) if (x[i] != y[i]) return false;
     return true;
 }
+    
+ec_compressed to_public(const ec_secret& key) {
+    ec_compressed point;
+    libbitcoin::secret_to_public(point, key);
+    return point;
+}
+
+address to_payment_address(const ec_secret& key, const address_format format) {
+    return libbitcoin::wallet::ec_private(key, format).to_payment_address();
+}
 
 namespace v1
 {
@@ -39,7 +49,7 @@ const inline output notification_output(
     const payment_code& alice,
     const payment_code& bob,
     const outpoint& prior, 
-    const ec_private& designated) {
+    const ec_secret& designated) {
     return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior))));
 }
 

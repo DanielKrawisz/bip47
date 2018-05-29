@@ -24,6 +24,11 @@ bool designated_pubkey(ec_public& designated, std::vector<transaction> previous,
 
 bool identifier_equals(const ec_compressed &x, const data_chunk& y);
 
+ec_compressed to_public(const ec_secret& key);
+
+address to_payment_address(const ec_secret& key, const address_format format);
+
+// v1 has functions specific to version 1 payment codes. 
 namespace v1
 {
 
@@ -31,7 +36,7 @@ const output notification_output(
     const payment_code& alice,
     const payment_code& bob,
     const outpoint& prior, 
-    const ec_private& designated);
+    const ec_secret& designated);
 
 bool is_notification_output(const output& output);
 
@@ -43,6 +48,7 @@ bool designated_pubkey(ec_public& out, const std::vector<transaction>& previous,
 
 } // v1
 
+// v2 has functions specific to version 2 payment codes. 
 namespace v2
 {
 

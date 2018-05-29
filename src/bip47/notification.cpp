@@ -2,6 +2,7 @@
 #include <bip47/payment_code.hpp>
 #include <bip47/low.hpp>
 #include <bip47/patterns.hpp>
+#include <bitcoin/bitcoin/math/elliptic_curve.hpp>
 
 namespace bip47
 {
@@ -10,12 +11,12 @@ namespace notifications
 {
 
 // TODO
-void sign_transaction(transaction& incomplete, const ec_private& key);
+void sign_transaction(transaction& incomplete, const ec_secret& key);
 
 //TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
-const outpoint find_redeemable_output(const transaction& tx, const ec_private& pk) {
-    const auto pubkey = pk.to_public();
-    const address address = pk.to_payment_address();
+const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk, address_format format) {
+    const auto pubkey = low::to_public(pk);
+    const address address = low::to_payment_address(pk, format);
     for (auto o : tx.outputs()) {
         const auto ops = o.script().operations();
         if (libbitcoin::chain::script::is_pay_key_hash_pattern(ops)) {
@@ -32,7 +33,7 @@ const transaction notify_v1_and_v2(
     const payment_code& bob,
     const output opa, 
     const output opb, 
-    const ec_private& designated,
+    const ec_secret& designated,
     const outpoint& prior, 
     unsigned int amount,
     const transaction::outs& other_outputs)
@@ -71,13 +72,13 @@ const transaction inline notify(
 const transaction inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
-    const ec_private& designated,
+    const ec_secret& designated,
     const transaction& prior, 
     address_format format,
     unsigned int amount,
     const transaction::outs other_outputs)
 {
-    return notify(alice, bob, designated, find_redeemable_output(prior, designated), format, amount, other_outputs);
+    return notify(alice, bob, designated, find_redeemable_output(prior, designated, format), format, amount, other_outputs);
 }
 
 bool inline valid(const transaction& tx)
@@ -99,7 +100,7 @@ namespace v2
 const transaction inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
-    const ec_private& designated,                // The private key used to redeem the prior transaction. 
+    const ec_secret& designated,                // The private key used to redeem the prior transaction. 
     const outpoint& prior,                       // outpoint to the prior transaction containing the designated pubkey. 
     unsigned int amount,
     const transaction::outs other_outputs) 
@@ -113,12 +114,13 @@ const transaction inline notify(
 const transaction inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
-    const ec_private& designated,
+    const ec_secret& designated,
+    const address_format format, 
     const transaction& prior, 
     unsigned int amount,
     const transaction::outs other_outputs)
 {
-    return notify(alice, bob, designated, find_redeemable_output(prior, designated), amount, other_outputs);
+    return notify(alice, bob, designated, find_redeemable_output(prior, designated, format), amount, other_outputs);
 }
 
 bool valid(const transaction& tx) {
@@ -173,12 +175,12 @@ const output inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
     unsigned int amount, 
-    const ec_private& designated, 
+    const ec_secret& designated, 
     const outpoint& prior) {
     // TODO randomization/ordering policy? 
     return output(amount,
         libbitcoin::chain::to_pay_multisig_pattern(1,
-            {libbitcoin::to_chunk(designated.to_public()),
+            {libbitcoin::to_chunk(low::to_public(designated)),
                 libbitcoin::to_chunk(bob.identifier()),
                 alice.mask(designated, bob.point(), prior).hd_public_key().data()}));
 }
