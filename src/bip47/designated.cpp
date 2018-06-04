@@ -1,3 +1,6 @@
+#ifndef BIP47_DESIGNATED_CPP
+#define BIP47_DESIGNATED_CPP
+
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bitcoin/bitcoin/chain/script.hpp>
 #include <bip47/patterns.hpp>
@@ -65,3 +68,5 @@ bool extract_designated_pubkey(
 }
 
 }
+
+#endif

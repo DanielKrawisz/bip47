@@ -5,11 +5,11 @@ namespace bip47
 {
 
 secret::secret(payment_code_version version, const hd_secret& pk, bool bitmessage_notification)
-    :key(pk), code(bip47::payment_code(version, pk.to_public(), bitmessage_notification)) {}
-    
+    :key(pk), code(version, pk.pubkey(), bitmessage_notification) {}
 
-const bool secret::valid() {
-    return code.valid();
+
+const bool inline secret::valid() {
+    return key.valid() && code.valid();
 }
 
 // TODO
@@ -25,5 +25,5 @@ const address secret::next_address(unsigned int& n, const bip47::payment_code& t
         n++;
     } 
 }
-    
+
 } // bip47

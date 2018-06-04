@@ -5,7 +5,7 @@ using namespace std;
 
 namespace bip47
 {
-    
+
 const ec_secret null_ec_secret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const ec_secret null_hd_chain_code = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -24,6 +24,10 @@ bool inline hd_public::valid() const {
 bool inline hd_public::operator== (hd_public code) const {
     return point == code.point && chain_code == code.chain_code;
 }
+
+bool inline hd_public::operator!= (hd_public code) const {
+    return point != code.point || chain_code != code.chain_code;
+}
     
 data_chunk hd_secret::data() const {
     data_chunk data(libbitcoin::ec_secret_size + libbitcoin::wallet::hd_chain_code_size);
@@ -34,7 +38,8 @@ data_chunk hd_secret::data() const {
 }
 
 const hd_secret hd_secret::from_data(data_chunk data) {
-    if (data.size() != libbitcoin::ec_secret_size + libbitcoin::wallet::hd_chain_code_size) return {null_ec_secret, null_hd_chain_code};
+    if (data.size() != libbitcoin::ec_secret_size + libbitcoin::wallet::hd_chain_code_size) 
+        return {null_ec_secret, null_hd_chain_code};
     ec_secret key;
     hd_chain_code chain_code;
     auto it = begin(data);
@@ -43,7 +48,7 @@ const hd_secret hd_secret::from_data(data_chunk data) {
     return {key, chain_code};
 }
     
-const hd_public inline hd_secret::to_public() const {
+const hd_public inline hd_secret::pubkey() const {
     return {low::to_public(key), chain_code};
 }
 
@@ -56,7 +61,8 @@ bool inline hd_secret::operator== (hd_secret code) const {
 }
 
 const hd_public hd_public::from_data(data_chunk data) {
-    if (data.size() != libbitcoin::ec_compressed_size + libbitcoin::wallet::hd_chain_code_size) return {libbitcoin::null_compressed_point, null_hd_chain_code};
+    if (data.size() != libbitcoin::ec_compressed_size + libbitcoin::wallet::hd_chain_code_size) 
+        return {libbitcoin::null_compressed_point, null_hd_chain_code};
     ec_compressed point;
     hd_chain_code chain_code;
     auto it = begin(data);

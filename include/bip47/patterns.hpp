@@ -15,7 +15,7 @@ bool is_public_key_pattern(const machine::operation::list& ops);
 bool is_key_hash_pattern(const machine::operation::list& ops);
 bool is_multisig_script_hash_pattern(unsigned int& middle, const machine::operation::list& ops);
 
-machine::operation::list to_pay_multisig_pattern(uint8_t signatures, const vector<data_chunk>& points);
+machine::operation::list to_pay_multisig_pattern(uint8_t signatures, const std::vector<data_chunk>& points);
 
 } // chain
     

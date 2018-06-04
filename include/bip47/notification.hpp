@@ -72,9 +72,9 @@ const transaction notify(
 
 bool valid(const transaction &tx);
 
-bool to(const transaction& tx, const identifier& bob);
+bool to(const transaction& tx, const payment_code_identifier& bob);
 
-bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const identifier& bob);
+bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const payment_code_identifier& bob);
 
 } // v2
 

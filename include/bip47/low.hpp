@@ -56,7 +56,7 @@ bool is_notification_change_output(const output& output);
 
 const output notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount);
 
-const bool is_notification_change_output_to(const output& output, const identifier& bob_id);
+const bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id);
 
 bool notification_payload(payment_code& payload, const transaction& tx);
 

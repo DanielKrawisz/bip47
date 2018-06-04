@@ -23,6 +23,7 @@ struct hd_public {
     data_chunk data() const;
     
     bool operator==(hd_public) const;
+    bool operator!=(hd_public) const;
     
     static const hd_public from_data(data_chunk);
 };
@@ -35,8 +36,10 @@ struct hd_secret {
     
     data_chunk data() const;
     
-    const hd_public to_public() const;
+    const hd_public pubkey() const;
+    
     bool operator==(hd_secret) const;
+    bool operator!=(hd_secret) const;
     
     static const hd_secret from_data(data_chunk);
 };

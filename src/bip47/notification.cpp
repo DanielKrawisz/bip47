@@ -57,7 +57,7 @@ namespace v1
 const transaction inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
-    const ec_private& designated,
+    const ec_secret& designated,
     const outpoint& prior, 
     address_format format,
     unsigned int amount,
@@ -133,7 +133,7 @@ bool valid(const transaction& tx) {
     return false;
 }
 
-bool to(const transaction& tx, const identifier& bob) {
+bool to(const transaction& tx, const payment_code_identifier& bob) {
     if (!v1::valid(tx)) return false;
     for (auto output : tx.outputs()) if (low::v2::is_notification_change_output_to(output, bob)) return true;
     return false;
@@ -182,7 +182,7 @@ const output inline notify(
         libbitcoin::chain::to_pay_multisig_pattern(1,
             {libbitcoin::to_chunk(low::to_public(designated)),
                 libbitcoin::to_chunk(bob.identifier()),
-                alice.mask(designated, bob.point(), prior).hd_public_key().data()}));
+                alice.mask(designated, bob.point(), prior).pubkey().data()}));
 }
 
 bool to(const transaction& tx, const ec_compressed& bob_id)
@@ -196,12 +196,15 @@ bool to(const transaction& tx, const ec_compressed& bob_id)
     return false;
 }
 
-bool read(const ec_uncompressed& payload, const transaction& tx, const ec_compressed& bob_id)
+bool read(ec_uncompressed& payload, const transaction& tx, const ec_compressed& bob_id)
 {
     for (auto output : tx.outputs()) if (valid(output)) {
         auto ops = output.script().operations();
         
         if (low::identifier_equals(bob_id, ops[1].data())) {
+            for (int i = 0; i < payload.size(); i++) {
+                payload[i] = ops[3].data()[i];
+            }
             std::copy(ops[3].data().begin(), ops[3].data().end(), payload.begin());
             return true;
         }

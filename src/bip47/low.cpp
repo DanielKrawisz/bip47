@@ -50,7 +50,7 @@ const inline output notification_output(
     const payment_code& bob,
     const outpoint& prior, 
     const ec_secret& designated) {
-    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior))));
+    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior).slice())));
 }
 
 bool inline is_notification_output(const output& output) {
@@ -91,7 +91,7 @@ const output inline notification_change_output(const ec_compressed& alice, const
     return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob.identifier()}));
 }
 
-const inline bool is_notification_change_output_to(const output& output, const identifier& bob_id) {
+const inline bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id) {
     if (!is_notification_change_output(output)) return false;
     identifier_equals(bob_id, output.script().operations()[1].data());
     return true;

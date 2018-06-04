@@ -2,27 +2,38 @@
 #include <bip47/secret.hpp>
 #include <string>
 #include <vector>
+#include "test_keys.cpp"
 
 using namespace std;
 
 namespace bip47
 {
 
-// TODO fill in some test cases
 TEST(payment_codes, base58_success) {
-    const vector<string> test_cases = {};
-    for (string test_case : test_cases) {
-        payment_code code = payment_code::base58_decode(test_case);
+    for (test_payment_code test_case : valid_test_payment_codes) {
+        payment_code code = payment_code::base58_decode(test_case.code);
         EXPECT_TRUE(code.valid());
-        EXPECT_TRUE(test_case == code.base58_encode());
+        EXPECT_TRUE(test_case.code == code.base58_encode());
     }
 }
 
 TEST(payment_codes, base58_fail) {
-    const vector<string> test_cases = {};
-    for (string test_case: test_cases) {
-        EXPECT_FALSE(payment_code::base58_decode(test_case).valid());
+    for (test_payment_code test_case: invalid_test_payment_codes) {
+        EXPECT_FALSE(payment_code::base58_decode(test_case.code).valid());
     }
+}
+
+TEST(payment_codes, pubkey) {
+    for (test_payment_code test_case : valid_test_payment_codes) {
+        payment_code code = payment_code::base58_decode(test_case.code);
+        EXPECT_TRUE(test_case.key.pubkey() == code.pubkey());
+    }
+}
+
+TEST(payment_codes, masks) {
+}
+
+TEST(payment_codes, notification_address) {
 }
 
 } // bip47
