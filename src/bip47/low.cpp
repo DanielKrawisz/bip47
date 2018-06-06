@@ -10,7 +10,7 @@ namespace low
 {
 
 const output inline pay_key_hash(const payment_code& to, unsigned int amount, address_format format) {
-    return output(amount, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_key_hash_pattern(to.notification_address(format))));
+    return output(amount, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_key_hash_pattern(notification_address(to, format))));
 }
 
 const bool inline to(const output& output, const address& notification_address) {
@@ -21,9 +21,7 @@ const bool inline to(const output& output, const address& notification_address) 
 const bool payload(payment_code& out, const output& output) {
     const auto ops = output.script().operations();
     if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops)) return false;
-    if (ops[1].data().size() != 80) return false;
-    out = payment_code(ops[1].data());
-    return true;
+    return from_data(out, ops[1].data());
 }
 
 bool inline identifier_equals(const ec_compressed &x, const data_chunk& y) {
@@ -31,8 +29,8 @@ bool inline identifier_equals(const ec_compressed &x, const data_chunk& y) {
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) if (x[i] != y[i]) return false;
     return true;
 }
-    
-ec_compressed to_public(const ec_secret& key) {
+
+const ec_compressed to_public(const ec_secret& key) {
     ec_compressed point;
     libbitcoin::secret_to_public(point, key);
     return point;
@@ -50,10 +48,10 @@ const inline output notification_output(
     const payment_code& bob,
     const outpoint& prior, 
     const ec_secret& designated) {
-    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(alice.mask(designated, bob.point(), prior).slice())));
+    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(masked_payment_code(alice, payment_code_mask(designated, point(bob), prior)))));
 }
 
-bool inline is_notification_output(const output& output) {
+bool is_notification_output(const output& output) {
     const auto ops = output.script().operations();
     return libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == 80;
 }
@@ -82,16 +80,18 @@ bool is_notification_change_output_pattern(const libbitcoin::machine::operation:
 namespace v2
 {
 
-bool inline is_notification_change_output(const output& output) {
+bool is_notification_change_output(const output& output) {
     return is_notification_change_output_pattern(output.script().operations());
 }
 
 const output inline notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount) {
     // TODO randomization/ordering policy? 
-    return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob.identifier()}));
+    payment_code_identifier bob_id;
+    identifier(bob_id, bob);
+    return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob_id}));
 }
 
-const inline bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id) {
+const bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id) {
     if (!is_notification_change_output(output)) return false;
     identifier_equals(bob_id, output.script().operations()[1].data());
     return true;

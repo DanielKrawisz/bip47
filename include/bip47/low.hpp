@@ -7,9 +7,10 @@
 namespace bip47
 {
 
+typedef libbitcoin::ec_compressed ec_compressed;
+typedef libbitcoin::wallet::ec_public ec_public;
 typedef libbitcoin::chain::output output;
 typedef libbitcoin::chain::transaction transaction;
-typedef libbitcoin::wallet::ec_public ec_public;
 
 // low contains functions which are probably too low-level for most ordinary use cases 
 // but which are still exposed publicly just in case. 
@@ -23,8 +24,6 @@ const bool to(const output& output, const address& notification_address);
 bool designated_pubkey(ec_public& designated, std::vector<transaction> previous, const transaction& nt);
 
 bool identifier_equals(const ec_compressed &x, const data_chunk& y);
-
-ec_compressed to_public(const ec_secret& key);
 
 address to_payment_address(const ec_secret& key, const address_format format);
 

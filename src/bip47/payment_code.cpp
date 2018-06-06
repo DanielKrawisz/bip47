@@ -1,17 +1,19 @@
-#include <array>
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
-#include <bitcoin/bitcoin/formats/base_58.hpp>
+#include <bip47/low.hpp>
 #include <bitcoin/bitcoin/math/checksum.hpp>
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
+#include <array>
+
 
 namespace bip47
 {
+    
+namespace low
+{
 
-payment_code::payment_code(const libbitcoin::byte_array<payment_code_size> code):code(code) {}
-
-payment_code::payment_code(payment_code_version version, const hd_public& pubkey, bool bitmessage_notification) {
-    if (version < 1 && version > 3) return;
+const payment_code new_payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey) {
+    payment_code code;
     code[0] = version;
     code[1] = bitmessage_notification;
     
@@ -29,40 +31,64 @@ payment_code::payment_code(payment_code_version version, const hd_public& pubkey
     for (; n < payment_code_size; n++) {
         code[n] = 0;
     }
+    
+    return payment_code(code);
 }
 
-payment_code::payment_code(const data_chunk data) {
-    if (data.size() != 80) payment_code();
-    std::copy(data.begin(), data.end(), code.begin());
-}
-
-uint8_t inline payment_code::operator[](int index) const {
-    return code[index];
-}
-
-bool inline payment_code::operator==(payment_code pc) const {
-    return code == pc.code;
-}
-
-bool inline payment_code::operator!=(payment_code pc) const {
-    return code != pc.code;
-}
-
-payment_code_version inline payment_code::version() const {
-    return code.at(0);
-}
-
-bool inline payment_code::valid() const {
-    if (!(code.at(0) > 0 && code.at(0) <= 3 && code.at(1) <= 1 && (code.at(2) == 2 || code.at(2) == 3))) return false;
-    for (int i = 67; i < payment_code_size; i ++) if (code.at(i) != 0) return false;
+bool valid(const payment_code& code) {
+    // check version. 
+    if (code[0] == 0 || code[0] > 3) return false;
+    
+    // check valid flags. 
+    if (code[1] > bitmessage_notification_flag) return false;
+    
+    // check sign byte.  
+    if (code[2] != 2 && code[2] != 3) return false;
+    
+    // check that the end is zero. 
+    for (int i = 67; i < payment_code_size; i ++) if (code[i] != 0) return false;
     return true;
 }
 
-bool inline payment_code::bitmessage_notification() const {
-    return code[1] && 1 == 1;
+bool from_data(payment_code& code, const data data) {
+    if (data.size() != 80) return false;
+    std::copy(data.begin(), data.end(), code.begin());
+    return true;
 }
 
-const ec_compressed payment_code::point() const {
+const payment_code payment_code_from_data(const data data) {
+    payment_code code;
+    from_data(code, data);
+    return code;
+}
+
+const data encode_with_checksum(const payment_code& code) {
+    auto data = libbitcoin::to_chunk(code);
+    libbitcoin::append_checksum(data);
+    return data;
+}
+
+const int checksum_size = 4;
+
+const int payment_code_with_checksum_size = payment_code_size + checksum_size;
+
+bool base58_decode(payment_code& code, std::string string) {
+    libbitcoin::byte_array<payment_code_with_checksum_size> with_checksum;
+    bool success = libbitcoin::decode_base58<payment_code_with_checksum_size>(with_checksum, string);
+    if (!success) return false;
+    
+    if (!libbitcoin::verify_checksum(with_checksum)) {
+        return false;
+    }
+    
+    for (int i = 0; i < payment_code_size; i++) {
+        code[i] = with_checksum[i];
+    }
+    
+    return true;
+}
+
+const ec_compressed point(const payment_code& code) {
     ec_compressed k;
     for (int i = 0; i < k.size(); i ++) {
         k[i] = code[i + 2];
@@ -70,7 +96,7 @@ const ec_compressed payment_code::point() const {
     return k;
 }
 
-const hd_chain_code payment_code::chain_code() const {
+const hd_chain_code chain_code(const payment_code& code) {
     hd_chain_code k;
     for (int i = 0; i < k.size(); i++) {
         k[i] = code[i + 36];
@@ -78,51 +104,40 @@ const hd_chain_code payment_code::chain_code() const {
     return k;
 }
 
-const hd_public inline payment_code::pubkey() const {
-    return {point(), chain_code()};
-}
-
-libbitcoin::data_slice inline payment_code::slice() const {
-    return libbitcoin::data_slice(code);
-}
-
-std::string inline payment_code::base58_encode() const {
-    auto data = libbitcoin::to_chunk(code);
-    libbitcoin::append_checksum(data);
-    return libbitcoin::encode_base58(data);
-}
-
-bool inline payment_code::base58_decode(payment_code& pc, std::string string) {
-    bool success = libbitcoin::decode_base58<payment_code_size>(pc.code, string);
-    if (!success) return false;
-    auto data = libbitcoin::to_chunk(pc.code);
-    if (libbitcoin::verify_checksum(data)) {
-        pc = payment_code(data);
-        return true;
-    }
-    return false;
-}
-
-inline payment_code::payment_code() {}
-
-void inline payment_code::invalidate() {
+inline void invalidate(payment_code& code) {
     code[0] = 0;
 }
 
-const payment_code inline payment_code::base58_decode(std::string string) {
-    payment_code pc;
-    // Ensure code is invalid if we cannot decode from base 58.
-    if (!base58_decode(pc, string)) pc.invalidate();
-    return pc;
+// TODO
+const libbitcoin::wallet::hd_public to_hd_public(const payment_code& code) {
+    throw 0;
+}
+
+void payment_code_identifier(ec_compressed& identifier, const payment_code& code) {
+    auto hash = libbitcoin::sha256_hash(code);
+    identifier[0] = 0x02;
+    for (int i = 0; i < hash.size(); i ++) {
+        identifier[i + 1] = hash[i];
+    }
 }
 
 // TODO
-libbitcoin::wallet::hd_public to_hd_public(const hd_public& pubkey) {
-    return libbitcoin::wallet::hd_public();
+const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) {
+    return libbitcoin::null_long_hash;
 }
 
-const address inline payment_code::notification_address(address_format format) const {
-    return libbitcoin::wallet::ec_public(to_hd_public(pubkey()).derive_public(0).point()).to_payment_address(format);
+// TODO
+libbitcoin::data_slice masked(payment_code& code, const mask mask) {
+    throw 0;
+}
+
+} // low
+
+const payment_code payment_code::base58_decode(std::string string) {
+    low::payment_code code;
+    // Ensure code is invalid if we cannot decode from base 58.
+    if (!low::base58_decode(code, string)) low::invalidate(code);
+    return code;
 }
 
 // TODO
@@ -135,30 +150,9 @@ const hd_public payment_code::change(unsigned int n) const {
     return {};
 }
 
-// TODO
-const libbitcoin::long_hash payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) {
-    return libbitcoin::null_long_hash;
-}
-
-void payment_code::mask_payment_code(libbitcoin::long_hash mask) {
-    for (int i = 3; i < 35; i++) code[i] = code[i]; // TODO
-    for (int i = 35; i < 67; i++) code[i] = code[i]; // TODO
-}
-
-const payment_code payment_code::mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) const {    
-    // mask payment code.
-    payment_code masked(code);
-    masked.mask_payment_code(payment_code_mask(pk, point, outpoint));
-    return masked;
-}
-
 const payment_code_identifier payment_code::identifier() const {
-    payment_code_identifier id;
-    auto hash = libbitcoin::sha256_hash(code);
-    id[0] = 0x02;
-    for (int i = 0; i < hash.size(); i ++) {
-        id[i + 1] = hash[i];
-    }
+    ec_compressed id;
+    low::payment_code_identifier(id, *this);
     return id;
 }
 

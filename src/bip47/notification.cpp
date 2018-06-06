@@ -11,7 +11,9 @@ namespace notifications
 {
 
 // TODO
-void sign_transaction(transaction& incomplete, const ec_secret& key);
+void sign_transaction(transaction& incomplete, const ec_secret& key) {
+    throw 0;
+}
 
 //TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
 const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk, address_format format) {
@@ -182,7 +184,7 @@ const output inline notify(
         libbitcoin::chain::to_pay_multisig_pattern(1,
             {libbitcoin::to_chunk(low::to_public(designated)),
                 libbitcoin::to_chunk(bob.identifier()),
-                alice.mask(designated, bob.point(), prior).pubkey().data()}));
+                low::masked_pubkey(alice, low::payment_code_mask(designated, bob.point(), prior))}));
 }
 
 bool to(const transaction& tx, const ec_compressed& bob_id)
