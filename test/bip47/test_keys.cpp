@@ -1,16 +1,58 @@
 #include <bitcoin/bitcoin/formats/base_58.hpp>
+#include <bitcoin/bitcoin/wallet/hd_private.hpp>
 #include <gtest/gtest.h>
 #include "test_keys.hpp"
 
 using namespace std;
 using namespace bip47;
 
-bool hd_pair::operator==(hd_pair p) const {
-    return secret == p.secret && pubkey == p.pubkey;
-}
+const libbitcoin::wallet::hd_key hd_pair::libbitcoin_hd_key_secret() {
+    libbitcoin::wallet::hd_key k;
+    int n = 0;
+    for (; n < 13; n++) {
+        k[n] = 0;
+    }
+    for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
+        k[n] = secret.chain_code[i];
+        n++;
+    }
     
-bool hd_pair::operator!=(hd_pair p) const {
-    return secret != p.secret || pubkey != p.pubkey;
+    k[n] = 0;
+    n++;
+    
+    for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
+        k[n] = secret.key[i];
+        n++;
+    }
+    
+    return k;
+}
+
+const libbitcoin::wallet::hd_key hd_pair::libbitcoin_hd_key_pubkey() {
+    libbitcoin::wallet::hd_key k;
+    int n = 0;
+    for (; n < 13; n++) {
+        k[n] = 0;
+    }
+    for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
+        k[n] = pubkey.chain_code[i];
+        n++;
+    }
+    
+    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
+        k[n] = pubkey.point[i];
+        n++;
+    }
+    
+    return k;
+}
+
+const libbitcoin::wallet::hd_private hd_pair::libbitcoin_hd_private() {    
+    return libbitcoin::wallet::hd_private(libbitcoin_hd_key_secret());
+}
+
+const libbitcoin::wallet::hd_public hd_pair::libbitcoin_hd_public() {    
+    return libbitcoin::wallet::hd_public(libbitcoin_hd_key_pubkey());
 }
 
 const hd_pair hd_from_string(string hd) {

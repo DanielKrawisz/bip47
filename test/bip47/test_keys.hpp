@@ -11,16 +11,26 @@ struct hd_pair {
     hd_secret secret;
     hd_public pubkey;
     
-    bool operator==(hd_pair p) const;
+    bool operator==(hd_pair p) const {
+        return secret == p.secret && pubkey == p.pubkey;
+    }
     
-    bool operator!=(hd_pair p) const;
+    bool operator!=(hd_pair p) const {
+        return secret != p.secret || pubkey != p.pubkey;
+    }
+    
+    const libbitcoin::wallet::hd_key libbitcoin_hd_key_pubkey();
+    const libbitcoin::wallet::hd_key libbitcoin_hd_key_secret();
+    
+    const libbitcoin::wallet::hd_private libbitcoin_hd_private();
+    const libbitcoin::wallet::hd_public libbitcoin_hd_public();
 };
 
 struct test_payment_code {
-    bip47::hd_secret key;
+    hd_secret key;
     std::string code;
     
-    test_payment_code(bip47::payment_code_version version, const bip47::hd_secret pk, bool bitmessage_notification);
+    test_payment_code(payment_code_version version, const hd_secret pk, bool bitmessage_notification);
     
     test_payment_code():key(),code(""){}
 };

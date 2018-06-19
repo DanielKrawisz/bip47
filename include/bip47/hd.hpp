@@ -14,9 +14,18 @@ typedef libbitcoin::ec_secret ec_secret;
 typedef libbitcoin::wallet::hd_chain_code hd_chain_code;
 typedef libbitcoin::data_chunk data_chunk;
 
+// low contains low-level functions. 
 namespace low
 {
     const ec_compressed to_public(const ec_secret& key);
+    
+    const hd_chain_code chain_code(const libbitcoin::wallet::hd_key& hd);
+    
+    const ec_compressed public_key(const libbitcoin::wallet::hd_key& hd);
+
+    const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd);
+    
+    const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key);
 } // low
 
 const ec_secret null_ec_secret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -26,8 +35,10 @@ struct hd_public {
     ec_compressed point;
     hd_chain_code chain_code;
     
-    hd_public(ec_compressed point, hd_chain_code chain_code):point(point), chain_code(chain_code) {};
     hd_public():point(libbitcoin::null_compressed_point), chain_code(null_hd_chain_code){}
+    hd_public(ec_compressed point, hd_chain_code chain_code):point(point), chain_code(chain_code) {}
+    hd_public(libbitcoin::wallet::hd_key hd)
+        :point(low::public_key(hd)), chain_code(low::chain_code(hd)){}
     
     bool valid() const;
     
@@ -42,9 +53,10 @@ struct hd_public {
 struct hd_secret {
     ec_secret key;
     hd_chain_code chain_code;
-    
-    hd_secret(ec_secret key, hd_chain_code chain_code):key(key), chain_code(chain_code) {};
+
     hd_secret():key(null_ec_secret), chain_code(null_hd_chain_code){};
+    hd_secret(ec_secret key, hd_chain_code chain_code):key(key), chain_code(chain_code) {};
+    hd_secret(libbitcoin::wallet::hd_key hd):key(low::secret_key(hd)), chain_code(low::chain_code(hd)){}
     
     bool valid() const;
     
@@ -52,8 +64,8 @@ struct hd_secret {
     
     const hd_public pubkey() const;
     
-    bool operator==(hd_secret) const;
-    bool operator!=(hd_secret) const;
+    bool operator==(const hd_secret code) const;
+    bool operator!=(const hd_secret code) const;
     
     static const hd_secret from_data(data_chunk);
 };
@@ -78,11 +90,11 @@ inline bool hd_secret::valid() const {
     return key != null_ec_secret;
 }
 
-inline bool hd_secret::operator== (hd_secret code) const {
+inline bool hd_secret::operator== (const hd_secret code) const {
     return key == code.key && chain_code == code.chain_code;
 }
 
-inline bool hd_secret::operator!= (hd_secret code) const {
+inline bool hd_secret::operator!= (const hd_secret code) const {
     return key != code.key || chain_code != code.chain_code;
 }
 

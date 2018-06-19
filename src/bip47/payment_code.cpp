@@ -99,7 +99,7 @@ const ec_compressed point(const payment_code& code) {
 const hd_chain_code chain_code(const payment_code& code) {
     hd_chain_code k;
     for (int i = 0; i < k.size(); i++) {
-        k[i] = code[i + 36];
+        k[i] = code[i + 35];
     }
     return k;
 }
@@ -121,16 +121,6 @@ void payment_code_identifier(ec_compressed& identifier, const payment_code& code
     }
 }
 
-// TODO
-const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) {
-    return libbitcoin::null_long_hash;
-}
-
-// TODO
-libbitcoin::data_slice masked(payment_code& code, const mask mask) {
-    throw 0;
-}
-
 } // low
 
 const payment_code payment_code::base58_decode(std::string string) {
@@ -138,6 +128,12 @@ const payment_code payment_code::base58_decode(std::string string) {
     // Ensure code is invalid if we cannot decode from base 58.
     if (!low::base58_decode(code, string)) low::invalidate(code);
     return code;
+}
+
+const payment_code_identifier payment_code::identifier() const {
+    ec_compressed id;
+    low::payment_code_identifier(id, *this);
+    return id;
 }
 
 // TODO
@@ -148,12 +144,6 @@ const hd_public payment_code::pubkey(unsigned int n) const {
 // TODO
 const hd_public payment_code::change(unsigned int n) const {
     return {};
-}
-
-const payment_code_identifier payment_code::identifier() const {
-    ec_compressed id;
-    low::payment_code_identifier(id, *this);
-    return id;
 }
 
 } // bip47

@@ -13,7 +13,8 @@ public:
     hd_secret key;
     payment_code code;
     
-    secret(payment_code_version version, bool bitmessage_notification, const hd_secret& pk):key(pk), code(version, bitmessage_notification, pk.pubkey()) {};
+    secret(payment_code_version version, bool bitmessage_notification, const hd_secret& pk)
+        :key(pk), code(version, bitmessage_notification, pk.pubkey()) {};
     secret(payment_code_version version, const hd_secret& pk):secret(version, false, pk){}
     
     const bool valid() {

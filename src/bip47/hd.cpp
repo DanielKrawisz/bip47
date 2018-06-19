@@ -5,7 +5,7 @@ using namespace std;
 
 namespace bip47
 {
-
+    
 const data_chunk hd_public::data() const {
     data_chunk data(libbitcoin::ec_compressed_size + libbitcoin::wallet::hd_chain_code_size);
     int n = 0;
@@ -13,11 +13,11 @@ const data_chunk hd_public::data() const {
         data[n] = point[i];
         n++;
     }
-    
     for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
         data[n] = chain_code[i];
         n++;
     }
+    
     return data;
 }
 
@@ -46,11 +46,11 @@ const data_chunk hd_secret::data() const {
         data[n] = key[i];
         n++;
     }
-    
     for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
         data[n] = chain_code[i];
         n++;
     }
+    
     return data;
 }
 
