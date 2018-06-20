@@ -14,6 +14,44 @@ typedef libbitcoin::ec_secret ec_secret;
 typedef libbitcoin::wallet::hd_chain_code hd_chain_code;
 typedef libbitcoin::data_chunk data_chunk;
 
+struct hd_public {
+    ec_compressed point;
+    hd_chain_code chain_code;
+    
+    hd_public();
+    hd_public(ec_compressed point, hd_chain_code chain_code);
+    hd_public(libbitcoin::wallet::hd_key hd);
+    
+    bool valid() const;
+    
+    const data_chunk data() const;
+    
+    bool operator==(const hd_public code) const;
+    bool operator!=(const hd_public code) const;
+    
+    static const hd_public from_data(data_chunk);
+};
+
+struct hd_secret {
+    ec_secret key;
+    hd_chain_code chain_code;
+
+    hd_secret();
+    hd_secret(ec_secret key, hd_chain_code chain_code);
+    hd_secret(libbitcoin::wallet::hd_key hd);
+    
+    bool valid() const;
+    
+    const data_chunk data() const;
+    
+    const hd_public pubkey() const;
+    
+    bool operator==(const hd_secret code) const;
+    bool operator!=(const hd_secret code) const;
+    
+    static const hd_secret from_data(data_chunk);
+};
+
 // low contains low-level functions. 
 namespace low
 {
@@ -30,45 +68,11 @@ namespace low
 
 const ec_secret null_ec_secret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const ec_secret null_hd_chain_code = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-struct hd_public {
-    ec_compressed point;
-    hd_chain_code chain_code;
     
-    hd_public():point(libbitcoin::null_compressed_point), chain_code(null_hd_chain_code){}
-    hd_public(ec_compressed point, hd_chain_code chain_code):point(point), chain_code(chain_code) {}
-    hd_public(libbitcoin::wallet::hd_key hd)
+inline hd_public::hd_public():point(libbitcoin::null_compressed_point), chain_code(null_hd_chain_code){}
+inline hd_public::hd_public(ec_compressed point, hd_chain_code chain_code):point(point), chain_code(chain_code) {}
+inline hd_public::hd_public(libbitcoin::wallet::hd_key hd)
         :point(low::public_key(hd)), chain_code(low::chain_code(hd)){}
-    
-    bool valid() const;
-    
-    const data_chunk data() const;
-    
-    bool operator==(const hd_public code) const;
-    bool operator!=(const hd_public code) const;
-    
-    static const hd_public from_data(data_chunk);
-};
-
-struct hd_secret {
-    ec_secret key;
-    hd_chain_code chain_code;
-
-    hd_secret():key(null_ec_secret), chain_code(null_hd_chain_code){};
-    hd_secret(ec_secret key, hd_chain_code chain_code):key(key), chain_code(chain_code) {};
-    hd_secret(libbitcoin::wallet::hd_key hd):key(low::secret_key(hd)), chain_code(low::chain_code(hd)){}
-    
-    bool valid() const;
-    
-    const data_chunk data() const;
-    
-    const hd_public pubkey() const;
-    
-    bool operator==(const hd_secret code) const;
-    bool operator!=(const hd_secret code) const;
-    
-    static const hd_secret from_data(data_chunk);
-};
 
 inline bool hd_public::valid() const {
     return point != libbitcoin::null_compressed_point;
@@ -85,6 +89,10 @@ inline bool hd_public::operator!= (const hd_public code) const {
 inline const hd_public hd_secret::pubkey() const {
     return hd_public(low::to_public(key), chain_code);
 }
+
+inline hd_secret::hd_secret():key(null_ec_secret), chain_code(null_hd_chain_code){};
+inline hd_secret::hd_secret(ec_secret key, hd_chain_code chain_code):key(key), chain_code(chain_code) {};
+inline hd_secret::hd_secret(libbitcoin::wallet::hd_key hd):key(low::secret_key(hd)), chain_code(low::chain_code(hd)){}
 
 inline bool hd_secret::valid() const {
     return key != null_ec_secret;

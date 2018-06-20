@@ -19,12 +19,45 @@ typedef libbitcoin::chain::output_point outpoint;
 typedef ec_compressed payment_code_identifier;
 
 const int payment_code_size = 80;
-const uint8_t bitmessage_notification_flag = 1;
+const uint8_t bitmessage_notification_flag = 1;// low contains low-level functions. 
 
+// namespace low is for low-level functions and constructs.
 namespace low
 {
 
 typedef libbitcoin::byte_array<payment_code_size> payment_code;
+
+} // low
+
+struct payment_code : public low::payment_code {
+    // member functions. 
+    bool valid() const;
+    payment_code_version version() const;
+    bool bitmessage_notification() const;
+    const ec_compressed point() const;
+    const hd_chain_code chain_code() const;
+    const hd_public     pubkey() const;
+    const address notification_address(address_format format) const;
+    const hd_public pubkey(unsigned int n) const;
+    const hd_public change(unsigned int n) const;
+    const payment_code_identifier identifier() const;
+    std::string base58() const;
+    
+    // constructors
+    payment_code();
+    payment_code(const low::payment_code code);
+    payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey);
+    payment_code(payment_code_version version, const hd_public& pubkey);
+
+    static const payment_code base58_decode(std::string string);
+    
+private:
+    payment_code(const data_chunk data);
+};
+
+// low contains low-level functions. 
+namespace low
+{
 
 const payment_code null_payment_code{
     0, 0, 
@@ -58,7 +91,7 @@ inline uint8_t flags(const payment_code& code) {
 }
 
 inline bool bitmessage_notification(const payment_code& code) {
-    return flags(code) && bitmessage_notification_flag == bitmessage_notification_flag;
+    return (flags(code) & bitmessage_notification_flag) == bitmessage_notification_flag;
 }
 
 const ec_compressed point(const payment_code& code);
@@ -82,33 +115,6 @@ libbitcoin::data_slice masked_payment_code(const payment_code& code, const mask 
 data masked_pubkey(const payment_code& code, const mask mask);
 
 } // low
-
-struct payment_code : public low::payment_code {
-    // member functions. 
-    bool valid() const;
-    payment_code_version version() const;
-    bool bitmessage_notification() const;
-    const ec_compressed point() const;
-    const hd_chain_code chain_code() const;
-    const hd_public     pubkey() const;
-    const address notification_address(address_format format) const;
-    const hd_public pubkey(unsigned int n) const;
-    const hd_public change(unsigned int n) const;
-    const payment_code_identifier identifier() const;
-    std::string base58() const;
-    
-    // constructors
-    payment_code():low::payment_code(low::null_payment_code){}
-    payment_code(const low::payment_code code):low::payment_code(code) {}
-    payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey)
-        :low::payment_code(low::new_payment_code(version, bitmessage_notification, pubkey)){}
-    payment_code(payment_code_version version, const hd_public& pubkey):payment_code(version, false, pubkey){}
-
-    static const payment_code base58_decode(std::string string);
-    
-private:
-    payment_code(const data_chunk data);
-};
 
 inline bool payment_code::valid() const {
     return low::valid(*this);
@@ -141,6 +147,12 @@ inline std::string payment_code::base58() const {
 inline const address payment_code::notification_address(address_format format) const {
     return low::notification_address(*this, format);
 }
+
+inline payment_code::payment_code():low::payment_code(low::null_payment_code){}
+inline payment_code::payment_code(const low::payment_code code):low::payment_code(code) {}
+inline payment_code::payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey)
+        :low::payment_code(low::new_payment_code(version, bitmessage_notification, pubkey)){}
+inline payment_code::payment_code(payment_code_version version, const hd_public& pubkey):payment_code(version, false, pubkey){}
 
 } // bip47
 
