@@ -30,29 +30,26 @@ typedef libbitcoin::byte_array<payment_code_size> payment_code;
 } // low
 
 struct payment_code : public low::payment_code {
-    // member functions. 
-    bool valid() const;
-    payment_code_version version() const;
-    bool bitmessage_notification() const;
-    const ec_compressed point() const;
-    const hd_chain_code chain_code() const;
-    const hd_public     pubkey() const;
-    const address notification_address(address_format format) const;
-    const hd_public pubkey(unsigned int n) const;
-    const hd_public change(unsigned int n) const;
-    const payment_code_identifier identifier() const;
-    std::string base58() const;
+                       bool valid() const;
+       payment_code_version version() const;
+                       bool bitmessage_notification() const;
+        const ec_compressed point() const;
+        const hd_chain_code chain_code() const;
+            const hd_public pubkey() const;
+              const address notification_address(address_format format) const;
+            const hd_public pubkey(unsigned int n) const;
+            const hd_public change(unsigned int n) const;
+    payment_code_identifier identifier() const;
+          const std::string base58() const;
     
     // constructors
     payment_code();
     payment_code(const low::payment_code code);
     payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey);
     payment_code(payment_code_version version, const hd_public& pubkey);
+    payment_code(const data_chunk data);
 
     static const payment_code base58_decode(std::string string);
-    
-private:
-    payment_code(const data_chunk data);
 };
 
 // low contains low-level functions. 
@@ -110,9 +107,9 @@ typedef libbitcoin::long_hash mask;
 
 const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint);
 
-libbitcoin::data_slice masked_payment_code(const payment_code& code, const mask mask);
+const libbitcoin::data_slice mask_payment_code(const payment_code& code, const mask mask);
 
-data masked_pubkey(const payment_code& code, const mask mask);
+const data masked_pubkey(const payment_code& code, const mask mask);
 
 } // low
 
@@ -140,7 +137,7 @@ inline const hd_public payment_code::pubkey() const {
     return {point(), chain_code()};
 }
 
-inline std::string payment_code::base58() const {
+inline const std::string payment_code::base58() const {
     return libbitcoin::encode_base58(low::encode_with_checksum(*this));
 }
 

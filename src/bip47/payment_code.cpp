@@ -130,7 +130,7 @@ const payment_code payment_code::base58_decode(std::string string) {
     return code;
 }
 
-const payment_code_identifier payment_code::identifier() const {
+payment_code_identifier payment_code::identifier() const {
     ec_compressed id;
     low::payment_code_identifier(id, *this);
     return id;

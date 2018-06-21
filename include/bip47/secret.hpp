@@ -7,9 +7,13 @@
 namespace bip47
 {
 
+struct notification_key {
+    ec_secret secret;
+    address address;
+};
+
 // secret represents a payment code with its private key. 
-class secret {
-public:
+struct secret {
     hd_secret key;
     payment_code code;
     
@@ -20,6 +24,8 @@ public:
     const bool valid() {
         return key.valid() && code.valid();
     }
+    
+    const notification_key notification_address();
 
     // Derive address n to another payment code. It is possible that address n doesn't exist, so 
     // increment n if not. The value of n will be the next value that should be used the next

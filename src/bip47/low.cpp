@@ -1,7 +1,6 @@
 #include <bip47/low.hpp>
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
 #include <bitcoin/bitcoin/math/hash.hpp>
-#include "designated.cpp"
 
 namespace bip47
 {
@@ -68,16 +67,20 @@ const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key hd) 
     return k;
 }
 
+bool to(const output& output, const address& notification_address) {
+    const auto ops = output.script().operations();
+    return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == notification_address);
+}
+
+bool read_notification_payload(payment_code& pc, const output& output) {
+    const auto ops = output.script().operations();
+    if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == payment_code_size) return false;
+    pc = bip47::payment_code(output.script().operations()[1].data());
+    if (!pc.valid) return false;
+}
+
 namespace v1
 {
-
-const inline output notification_output(
-    const payment_code& alice,
-    const payment_code& bob,
-    const outpoint& prior, 
-    const ec_secret& designated) {
-    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(masked_payment_code(alice, payment_code_mask(designated, point(bob), prior)))));
-}
 
 bool is_notification_change_output_pattern(const libbitcoin::machine::operation::list& ops) {
     if (libbitcoin::chain::script::is_pay_multisig_pattern(ops)) {
@@ -112,124 +115,6 @@ const bool is_notification_change_output_to(const output& output, const payment_
 }
 
 } // v2
-
-// The previous transactions are not necessarily given in order.
-bool designated_pubkey(
-    ec_public& out,
-    const std::vector<transaction>& previous, 
-    const transaction& nt)
-{
-    auto inputs = nt.inputs();
-    const unsigned int size = inputs.size();
-    if (size < 1 || size != previous.size()) {
-        return false;
-    }
-
-    // A type used to iterate over the previous transactions, which might be out
-    // of order.
-    class matcher
-    {
-    public:
-        const unsigned int size;
-        const std::vector<transaction>& previous;
-
-        // Keep track of which txs have been matched.
-        std::vector<bool> matched;
-
-        // Keep track of which txs have been seen;
-        std::vector<bool> seen;
-
-        std::vector<libbitcoin::chain::transaction> txs;
-        std::vector<libbitcoin::hash_digest> hashes;
-
-        libbitcoin::chain::output get(
-            libbitcoin::chain::output_point previous_output)
-        {
-            for (unsigned int i = 0; i < size; i++) {
-                // skip txs that have already been matched.
-                if (matched[i]) continue;
-
-                // The previous tx corresponding to this index.
-                transaction prev;
-
-                // The hash of the previous tx corresponding to this index.
-                libbitcoin::hash_digest id;
-
-                if (seen[i]) {
-                    prev = txs[i];
-                    id = hashes[i];
-                } else {
-                    prev = previous[i];
-                    id = prev.hash();
-
-                    // libbitcoin::reverse_hash(id);
-                }
-
-                // If the hashes don't match, save these and try the next one.
-                if (id != previous_output.hash()) {
-                    txs[i] = prev;
-                    hashes[i] = id;
-                    seen[i] = true;
-
-                    continue;
-                }
-
-                matched[i] = true;
-
-                auto outputs = prev.outputs();
-                if (previous_output.index() < outputs.size()) {
-                    return prev.outputs()[previous_output.index()];
-                }
-
-                // Error case if the input doesn't correspond to an output.
-                return libbitcoin::chain::output();
-            }
-
-            // Invalid output if we go through the whole list and don't find
-            // what we're looking for.
-            return libbitcoin::chain::output();
-        }
-
-        matcher(int z, const std::vector<transaction>& p)
-            : size(z)
-            , previous(p)
-            , matched(std::vector<bool>(size))
-            , seen(std::vector<bool>(size))
-            , txs(std::vector<libbitcoin::chain::transaction>(size))
-            , hashes(std::vector<libbitcoin::hash_digest>(size))
-        {
-            for (int i = 0; i < z; i++) {
-                matched[i] = false;
-                seen[i] = false;
-            }
-        }
-    };
-
-    matcher m(size, previous);
-
-    // Go through inputs of this transaction.
-    for (std::vector<libbitcoin::chain::input>::iterator input = inputs.begin();
-         input != inputs.end();
-         ++input) {
-
-        // Get the previous output corresponding to this input.
-        libbitcoin::chain::output output = m.get(input->previous_output());
-
-        // if the output is invalid, something went wrong.
-        if (!output.is_valid()) {
-            return false;
-        }
-
-        if (extract_designated_pubkey(
-                out,
-                input->script().operations(),
-                output.script().operations())) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 } // low
 

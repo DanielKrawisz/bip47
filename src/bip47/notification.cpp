@@ -1,19 +1,17 @@
 #include <bip47/notification.hpp>
-#include <bip47/payment_code.hpp>
-#include <bip47/low.hpp>
 #include <bip47/patterns.hpp>
 #include <bitcoin/bitcoin/math/elliptic_curve.hpp>
 
 namespace bip47
 {
 
-namespace notifications
-{
-
 // TODO
 void sign_transaction(transaction& incomplete, const ec_secret& key) {
     throw 0;
 }
+
+namespace low
+{
 
 //TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
 const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk, address_format format) {
@@ -53,44 +51,51 @@ const transaction notify_v1_and_v2(
     return nt;
 }
 
+} // low
+
+namespace notifications
+{
+
 namespace v1
 {
 
-const transaction inline notify(
-    const payment_code& alice, 
-    const payment_code& bob, 
-    const ec_secret& designated,
-    const outpoint& prior, 
-    address_format format,
-    unsigned int amount,
-    const transaction::outs other_outputs)
-{
-    return notify_v1_and_v2(alice, bob, 
-        bip47::low::pay_key_hash(bob, amount, format), 
-        bip47::low::v1::notification_output(alice, bob, prior, designated), 
-        designated, prior, amount, other_outputs);
+bool is_notification_output(const output& output) {
+    const auto ops = output.script().operations();
+    return libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == 80;
 }
 
-const transaction inline notify(
-    const payment_code& alice, 
-    const payment_code& bob, 
-    const ec_secret& designated,
-    const transaction& prior, 
-    address_format format,
-    unsigned int amount,
-    const transaction::outs other_outputs)
+bool valid(const transaction& tx)
 {
-    return notify(alice, bob, designated, find_redeemable_output(prior, designated, format), format, amount, other_outputs);
-}
-
-bool inline valid(const transaction& tx)
-{
-    for (auto output : tx.outputs()) if (low::v1::is_notification_output(output)) return true;
+    for (const auto output : tx.outputs()) if (is_notification_output(output)) return true;
     return false;
 }
 
-bool inline to(const transaction& tx, const address& notification_address) {
-    for (auto output : tx.outputs()) if (low::to(output, notification_address)) return true;     
+bool to(const transaction& tx, const address& notification_address) {
+    for (const auto output : tx.outputs()) if (low::to(output, notification_address)) return true;     
+    return false;
+}
+
+bool read(payment_code& pc, const std::vector<transaction>& previous, const transaction& tx, const notification_key& notification) {
+    // Is this a transaction to the notification address? 
+    if (!to(tx, notification.address)) return false;
+    
+    // Find a valid notification output. 
+    for (const auto output : tx.outputs()) if (low::read_notification_payload(pc, output)) {        
+        // If this is not a version 1 payment code, try again. TODO does this make sense? 
+        // maybe we know how to use version 2 payment codes?
+        if (pc.version() != 1) continue;
+        
+        // Extract designated pubkey. 
+        ec_public designated;
+        if (!low::designated_pubkey(designated, previous, tx)) continue;
+        
+        // TODO figure out how to get the outpoint. 
+        // if (!low::unmask_payment_code(pc, notification.secret, designated, )) continue;
+        
+        // TODO check secp256k1 group membership. 
+        return true;
+    }
+    
     return false;
 }
 
@@ -98,32 +103,6 @@ bool inline to(const transaction& tx, const address& notification_address) {
 
 namespace v2
 {
-
-const transaction inline notify(
-    const payment_code& alice, 
-    const payment_code& bob, 
-    const ec_secret& designated,                // The private key used to redeem the prior transaction. 
-    const outpoint& prior,                       // outpoint to the prior transaction containing the designated pubkey. 
-    unsigned int amount,
-    const transaction::outs other_outputs) 
-{
-    return notify_v1_and_v2(alice, bob, 
-        low::v2::notification_change_output(alice.point(), bob, amount), 
-        low::v1::notification_output(alice, bob, prior, designated), 
-        designated, prior, amount, other_outputs);
-}
-
-const transaction inline notify(
-    const payment_code& alice, 
-    const payment_code& bob, 
-    const ec_secret& designated,
-    const address_format format, 
-    const transaction& prior, 
-    unsigned int amount,
-    const transaction::outs other_outputs)
-{
-    return notify(alice, bob, designated, find_redeemable_output(prior, designated, format), amount, other_outputs);
-}
 
 bool valid(const transaction& tx) {
     if (!v1::valid(tx)) return false;
