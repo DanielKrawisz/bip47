@@ -119,6 +119,11 @@ bool to(const transaction& tx, const payment_code_identifier& bob) {
     for (auto output : tx.outputs()) if (low::v2::is_notification_change_output_to(output, bob)) return true;
     return false;
 }
+
+// TODO
+bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const payment_code_identifier& bob) {
+    throw 0;
+}
     
 } // v2
 

@@ -37,8 +37,7 @@ struct payment_code : public low::payment_code {
         const hd_chain_code chain_code() const;
             const hd_public pubkey() const;
               const address notification_address(address_format format) const;
-            const hd_public pubkey(unsigned int n) const;
-            const hd_public change(unsigned int n) const;
+        const ec_compressed derive_pubkey(uint32_t n) const;
     payment_code_identifier identifier() const;
           const std::string base58() const;
     
@@ -98,7 +97,7 @@ const hd_chain_code chain_code(const payment_code& code);
 const libbitcoin::wallet::hd_public to_hd_public(const payment_code& code);
 
 inline const address notification_address(const payment_code& code, address_format format) {
-    return libbitcoin::wallet::ec_public(to_hd_public(code).derive_public(0).point()).to_payment_address(format);
+    return libbitcoin::wallet::ec_public(point(code)).to_payment_address(format);
 }
 
 const void identifier(payment_code_identifier& id, const payment_code& code);
@@ -135,6 +134,10 @@ inline const hd_chain_code payment_code::chain_code() const {
 
 inline const hd_public payment_code::pubkey() const {
     return {point(), chain_code()};
+}
+
+inline const ec_compressed payment_code::derive_pubkey(uint32_t n) const {
+    return low::to_hd_public(*this).derive_public(n).point();
 }
 
 inline const std::string payment_code::base58() const {

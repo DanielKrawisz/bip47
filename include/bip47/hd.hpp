@@ -52,22 +52,29 @@ struct hd_secret {
     static const hd_secret from_data(data_chunk);
 };
 
+const ec_secret null_ec_secret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const ec_secret null_hd_chain_code = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 // low contains low-level functions. 
 namespace low
 {
-    const ec_compressed to_public(const ec_secret& key);
     
-    const hd_chain_code chain_code(const libbitcoin::wallet::hd_key& hd);
+const ec_compressed to_public(const ec_secret& key);
     
-    const ec_compressed public_key(const libbitcoin::wallet::hd_key& hd);
+const hd_chain_code chain_code(const libbitcoin::wallet::hd_key& hd);
+    
+const ec_compressed public_key(const libbitcoin::wallet::hd_key& hd);
 
-    const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd);
+const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd);
     
-    const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key);
+const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key);
+
+// TODO is this right? I'm pretty sure that's it. 
+inline bool is_secp256k1(ec_secret pubkey) {
+    return pubkey != null_ec_secret;
+}
+
 } // low
-
-const ec_secret null_ec_secret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-const ec_secret null_hd_chain_code = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     
 inline hd_public::hd_public():point(libbitcoin::null_compressed_point), chain_code(null_hd_chain_code){}
 inline hd_public::hd_public(ec_compressed point, hd_chain_code chain_code):point(point), chain_code(chain_code) {}
