@@ -106,7 +106,7 @@ typedef libbitcoin::long_hash mask;
 
 const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint);
 
-const libbitcoin::data_slice mask_payment_code(const payment_code& code, const mask mask);
+const payment_code mask_payment_code(const payment_code& code, const mask mask);
 
 const data masked_pubkey(const payment_code& code, const mask mask);
 

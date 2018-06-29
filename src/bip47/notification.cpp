@@ -14,6 +14,7 @@ namespace low
 {
 
 //TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
+// There should also be multisig and pay to script hash versions of each. 
 const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk, address_format format) {
     const auto pubkey = low::to_public(pk);
     const address address = low::to_payment_address(pk, format);
@@ -77,7 +78,7 @@ bool to(const transaction& tx, const address& notification_address) {
 
 bool read(payment_code& pc, const std::vector<transaction>& previous, const transaction& tx, const notification_key& notification) {
     // Is this a transaction to the notification address? 
-    if (!to(tx, notification.address)) return false;
+    if (!to(tx, notification.notification_address)) return false;
     
     // Find a valid notification output. 
     for (const auto output : tx.outputs()) if (low::read_notification_payload(pc, output)) {        

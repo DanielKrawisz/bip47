@@ -1,4 +1,4 @@
-#include <bip47/secret.hpp>
+#include <bip47/payment_code.hpp>
 #include <string>
 #include <vector>
 #include <gtest/gtest.h>

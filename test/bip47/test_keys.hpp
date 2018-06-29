@@ -1,7 +1,7 @@
 #ifndef BIP47_TEST_KEYS_HPP
 #define BIP47_TEST_KEYS_HPP
 
-#include <bip47/payment_code.hpp>
+#include <bip47/secret.hpp>
 #include <string>
 #include <vector>
 
@@ -25,6 +25,11 @@ struct hd_pair {
     const libbitcoin::wallet::hd_private libbitcoin_hd_private();
     const libbitcoin::wallet::hd_public libbitcoin_hd_public();
 };
+    
+struct keypair {
+    ec_secret key;
+    ec_compressed point;
+};
 
 struct test_payment_code {
     hd_secret key;
@@ -33,6 +38,20 @@ struct test_payment_code {
     test_payment_code(payment_code_version version, const hd_secret pk, bool bitmessage_notification);
     
     test_payment_code():key(),code(""){}
+    
+    payment_code make_payment_code() {
+        return payment_code::base58_decode(code);
+    }
+    
+    secret make_secret() {
+        auto code = make_payment_code();
+        return bip47::secret(code.version(), code.bitmessage_notification(), key);
+    }
+    
+    keypair make_keypair() {
+        auto code = make_payment_code();
+        return {key.key, code.point()};
+    }
 };
 
 payment_code_version next_test_version(payment_code_version test_version);

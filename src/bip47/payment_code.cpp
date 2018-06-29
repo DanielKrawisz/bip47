@@ -1,6 +1,5 @@
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
-#include <bip47/low.hpp>
 #include <bitcoin/bitcoin/math/checksum.hpp>
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
 #include <array>
@@ -108,11 +107,6 @@ inline void invalidate(payment_code& code) {
     code[0] = 0;
 }
 
-// TODO
-const libbitcoin::wallet::hd_public to_hd_public(const payment_code& code) {
-    throw 0;
-}
-
 void payment_code_identifier(ec_compressed& identifier, const payment_code& code) {
     auto hash = libbitcoin::sha256_hash(code);
     identifier[0] = 0x02;
@@ -136,14 +130,15 @@ payment_code_identifier payment_code::identifier() const {
     return id;
 }
 
-// TODO
-const hd_public payment_code::pubkey(unsigned int n) const {
-    return {};
-}
-
-// TODO
-const hd_public payment_code::change(unsigned int n) const {
-    return {};
-}
+payment_code::payment_code(const data_chunk data){
+    if (data.size() != payment_code_size) {
+        low::invalidate(*this);
+        return;
+    }
+    
+    for (int i = 0; i < payment_code_size; i++) {
+        this->operator[](i) = data[i];
+    }
+};
 
 } // bip47

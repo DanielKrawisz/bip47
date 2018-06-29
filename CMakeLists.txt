@@ -107,7 +107,9 @@ add_library(bip47 SHARED
     src/bip47/low.cpp
     src/bip47/hd.cpp
     src/bip47/payment_code.cpp
+    src/bip47/mask.cpp
     src/bip47/secret.cpp
+    src/bip47/designated.cpp
     src/bip47/notification.cpp
 )
 

@@ -67,6 +67,9 @@ bool extract_designated_pubkey(
     return false;
 }
 
+namespace low
+{
+
 // The previous transactions are not necessarily given in order.
 bool designated_pubkey(
     ec_public& out,
@@ -185,6 +188,8 @@ bool designated_pubkey(
     return false;
 }
 
-}
+} // low 
+
+} // bip47 
 
 #endif

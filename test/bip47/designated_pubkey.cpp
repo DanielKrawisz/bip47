@@ -7,8 +7,6 @@
 #include <bitcoin/bitcoin/wallet/ec_private.hpp>
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
 
-#include <bip47/low.hpp>
-
 namespace bip47
 {
 typedef libbitcoin::data_chunk data_chunk;

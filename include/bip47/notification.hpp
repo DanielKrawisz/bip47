@@ -85,7 +85,6 @@ namespace v3
 
 bool valid(const output& output);
 
-// TODO do we really need prior? That doesn't really make sense. 
 const output notify(
     const ec_secret& designated, 
     const payment_code& bob, 

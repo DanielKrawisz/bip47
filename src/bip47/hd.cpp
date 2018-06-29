@@ -1,5 +1,4 @@
 #include <bip47/hd.hpp>
-#include <bip47/low.hpp>
 
 using namespace std;
 

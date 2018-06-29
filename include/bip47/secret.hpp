@@ -9,7 +9,7 @@ namespace bip47
 
 struct notification_key {
     ec_secret secret;
-    address address;
+    address notification_address;
 };
 
 // secret represents a payment code with its private key. 
@@ -19,6 +19,7 @@ struct secret {
     
     secret(payment_code_version version, bool bitmessage_notification, const hd_secret& pk);
     secret(payment_code_version version, const hd_secret& pk);
+    secret():code(low::null_payment_code){}
     
     bool valid() const;
     

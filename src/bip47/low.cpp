@@ -1,6 +1,7 @@
-#include <bip47/low.hpp>
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
 #include <bitcoin/bitcoin/math/hash.hpp>
+#include <bip47/payment_code.hpp>
+#include <bip47/notification.hpp>
 
 namespace bip47
 {
@@ -76,7 +77,13 @@ bool read_notification_payload(payment_code& pc, const output& output) {
     const auto ops = output.script().operations();
     if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == payment_code_size) return false;
     pc = bip47::payment_code(output.script().operations()[1].data());
-    if (!pc.valid) return false;
+    if (!valid(pc)) return false;
+    return true;
+}
+
+// TODO
+const libbitcoin::wallet::hd_public to_hd_public(const payment_code& code) {
+    throw 0;
 }
 
 namespace v1
@@ -103,6 +110,7 @@ namespace v2
 
 const output inline notification_change_output(const ec_compressed& alice, const payment_code& bob, unsigned int amount) {
     // TODO randomization/ordering policy? 
+    // Output ordering is irrelevant as far as bip47 goes. 
     payment_code_identifier bob_id;
     identifier(bob_id, bob);
     return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob_id}));
