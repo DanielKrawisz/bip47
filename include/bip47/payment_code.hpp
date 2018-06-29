@@ -102,13 +102,7 @@ inline const address notification_address(const payment_code& code, address_form
 
 const void identifier(payment_code_identifier& id, const payment_code& code);
 
-typedef libbitcoin::long_hash mask;
-
-const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint);
-
-const payment_code mask_payment_code(const payment_code& code, const mask mask);
-
-const data masked_pubkey(const payment_code& code, const mask mask);
+const payment_code mask_payment_code(const payment_code& code, const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint);
 
 } // low
 

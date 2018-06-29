@@ -69,7 +69,8 @@ const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd);
     
 const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key);
 
-// TODO is this right? I'm pretty sure that's it. 
+// TODO is this right? 
+// Also need to check whether it's below a certain number. 
 inline bool is_secp256k1(ec_secret pubkey) {
     return pubkey != null_ec_secret;
 }

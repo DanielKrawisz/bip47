@@ -80,7 +80,7 @@ bool read(payment_code& out, const std::vector<transaction>& previous, const tra
 
 } // v2
 
-namespace v3
+/*namespace v3
 {  
 
 bool valid(const output& output);
@@ -95,7 +95,7 @@ bool to(const transaction& tx, const ec_compressed& bob);
 
 bool read(payment_code& payload, const transaction& tx, const ec_compressed& bob);
 
-} // v3
+}*/ // v3
     
 } // notifications
 
@@ -130,7 +130,7 @@ bool read_notification_payload(payment_code& out, const output& output);
 
 bool designated_pubkey(ec_public& designated, const std::vector<transaction>& previous, const transaction& nt);
 
-bool unmask_payment_code(payment_code& code, const ec_secret& pk, const ec_public& pubkey, const outpoint& outpoint);
+bool unmask_payment_code(payment_code& code, const ec_public& designated, const ec_secret& pk, const outpoint& outpoint);
 
 namespace v1
 {
@@ -140,7 +140,7 @@ inline const output notification_output(
     const payment_code& bob,
     const outpoint& prior, 
     const ec_secret& designated) {
-    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(mask_payment_code(alice, payment_code_mask(designated, point(bob), prior)))));
+    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(mask_payment_code(alice, designated, point(bob), prior))));
 }
 
 bool is_notification_change_output_pattern(const libbitcoin::machine::operation::list& ops);

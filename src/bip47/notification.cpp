@@ -158,6 +158,7 @@ bool inline valid(const output& output) {
     return is_notification_pattern(output.script().operations());
 }
 
+/*
 const output inline notify(
     const payment_code& alice, 
     const payment_code& bob, 
@@ -171,6 +172,7 @@ const output inline notify(
                 libbitcoin::to_chunk(bob.identifier()),
                 low::masked_pubkey(alice, low::payment_code_mask(designated, bob.point(), prior))}));
 }
+*/
 
 bool to(const transaction& tx, const ec_compressed& bob_id)
 {

@@ -6,15 +6,9 @@
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
 #include <bitcoin/bitcoin/wallet/ec_private.hpp>
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
+#include <bip47/notification.hpp>
 
 namespace bip47
-{
-typedef libbitcoin::data_chunk data_chunk;
-
-namespace low
-{
-    
-namespace v2
 {
 
 // Some randomly generated private keys that we use to make test scripts. 
@@ -40,12 +34,12 @@ libbitcoin::wallet::ec_public test_key() {
     return extra_pks[i].to_public();
 }
 
-libbitcoin::machine::operation push(libbitcoin::data_chunk chunk) {
+libbitcoin::machine::operation push(data chunk) {
     return libbitcoin::machine::operation(chunk);
 }
 
 libbitcoin::machine::operation push(std::string str) {
-    libbitcoin::data_chunk in;
+    data in;
     libbitcoin::decode_base16(in, str);
     uint8_t size = in.size();
     if (size < 1 || size > 75) {
@@ -73,15 +67,15 @@ struct test_script {
              ) {
         std::vector<libbitcoin::chain::output> prev_outputs(q + 1);
         for (int i = 0; i < q; i ++) {
-            libbitcoin::data_chunk r;
+            data r;
             libbitcoin::decode_base16(r, "random stuff");
-            prev_outputs[i] = libbitcoin::chain::output(1, libbitcoin::chain::script::to_null_data_pattern(r));
+            prev_outputs[i] = libbitcoin::chain::output(1, libbitcoin::chain::script::to_pay_null_data_pattern(r));
         }
         prev_outputs[q] = libbitcoin::chain::output(1, output_script);
         
         // Construct a test transaction for the previous output that will be redeemed to 
         // make the notification tx. 
-        const libbitcoin::chain::transaction prev(0, 0, std::vector<libbitcoin::chain::input>(), prev_outputs);
+        const transaction prev(0, 0, std::vector<libbitcoin::chain::input>(), prev_outputs);
         
         if (!prev.is_valid()) return false;
         
@@ -94,8 +88,8 @@ struct test_script {
         }
         
         // The set of input txs as a list of data. The correct one is always last.
-        std::vector<data_chunk> prev_list(p + 1);
-        prev_list[p] = prev.to_data();
+        std::vector<transaction> prev_list(p + 1);
+        prev_list[p] = prev;
         
         // The list of input txs that are not the main one we're looking for. 
         std::vector<libbitcoin::chain::transaction> prev_txs(p);
@@ -109,14 +103,14 @@ struct test_script {
             if (!prev_txs[i].is_valid()) return false;
             
             prev_hashes[i] = prev_txs[i].hash();
-            prev_list[i] = prev_txs[i].to_data();
+            prev_list[i] = prev_txs[i];
         }
         
         // Create the inputs to the test tx. The correct one is always the first one. 
         std::vector<libbitcoin::chain::input> inputs(p + 1);
         inputs[0] = libbitcoin::chain::input(libbitcoin::chain::output_point(prev_hash, q), input_script, 0);
         for (int i = 0; i < p; i ++) {
-            libbitcoin::data_chunk pk;
+            data pk;
             prev_keys[i].to_data(pk);
             libbitcoin::machine::operation::list alt_input_script = {push("abdcef"), push(pk)};
             inputs[i + 1] = libbitcoin::chain::input(libbitcoin::chain::output_point(prev_hashes[i], 0), 
@@ -130,10 +124,8 @@ struct test_script {
         if (!tx.is_valid()) return false;
         
         ec_public extracted;
-        
-        //std::unique_ptr<Data> extracted = DesignatedPubkey(Data(tx.to_data()), prev_list);
-        
-        return extract_designated_pubkey(extracted) && expected.encoded() == extracted.encoded();
+        if (!low::designated_pubkey(extracted, prev_list, tx)) return false;
+        return extracted == expected;
     }
     
     // test this script to see that the value read matches the given expected value.
@@ -289,9 +281,5 @@ TEST(bip47_designated_pubkey, multisig_p2sh) {
         i++;
     }
 }
-
-} // v2
-
-} // low
 
 } // bip47

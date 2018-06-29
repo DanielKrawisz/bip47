@@ -8,11 +8,13 @@ typedef libbitcoin::wallet::ec_public ec_public;
 namespace low
 {
 
-const mask payment_code_mask(const ec_secret& pk, const ec_compressed& point, const outpoint& outpoint) {
+typedef libbitcoin::long_hash mask;
+
+const mask payment_code_mask(const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint) {
     ec_compressed secret_point(point);
     
     // TODO figure out something better to do here if the operation fails. 
-    if (!libbitcoin::ec_multiply(secret_point, pk)) throw 0;
+    if (!libbitcoin::ec_multiply(secret_point, designated)) throw 0;
     
     // TODO replace all the copying with something more efficient. 
     data op = outpoint.to_data();
@@ -40,8 +42,12 @@ const payment_code mask_payment_code(const low::payment_code& code, const mask m
     return data;
 }
 
-bool unmask_payment_code(payment_code& code, const ec_secret& pk, const ec_public& pubkey, const outpoint& outpoint) {
-    ec_compressed secret_point(pubkey);
+const payment_code mask_payment_code(const low::payment_code& code, const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint) {
+    return mask_payment_code(code, payment_code_mask(designated, point, outpoint));
+}
+
+bool unmask_payment_code(payment_code& code, const ec_public& designated, const ec_secret& pk, const outpoint& outpoint) {
+    ec_compressed secret_point(designated);
     
     if (!libbitcoin::ec_multiply(secret_point, pk)) return false;
     

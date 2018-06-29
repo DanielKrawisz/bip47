@@ -31,8 +31,8 @@ TEST(payment_code, masks) {
         payment_code masked;
         libbitcoin::chain::output_point output(libbitcoin::null_hash, 0);
         ASSERT_NO_THROW(masked = low::mask_payment_code(test_case.from.code, 
-            low::payment_code_mask(test_case.designated.key, test_case.to.code.point(), output));
-        ASSERT_TRUE(low::unmask_payment_code(masked, test_case.to.key.key, test_case.designated.point, output)));
+            test_case.designated.key, test_case.to.code.point(), output);
+        ASSERT_TRUE(low::unmask_payment_code(masked, test_case.designated.point, test_case.to.key.key, output)));
         ASSERT_NO_THROW(EXPECT_TRUE(masked == test_case.from.code));
     }
 }

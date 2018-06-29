@@ -27,10 +27,12 @@ const ec_compressed to_public(const ec_secret& key) {
     return point;
 }
 
+const uint8_t hd_key_offset = 13;
+
 const hd_chain_code chain_code(const libbitcoin::wallet::hd_key& hd) {
     hd_chain_code cc;
     for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
-        cc[i] = hd[13 + i];
+        cc[i] = hd[hd_key_offset + i];
     }
     
     return cc;
@@ -39,16 +41,28 @@ const hd_chain_code chain_code(const libbitcoin::wallet::hd_key& hd) {
 const ec_compressed public_key(const libbitcoin::wallet::hd_key& hd) {
     ec_compressed ec;
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
-        ec[i] = hd[13 + libbitcoin::wallet::hd_chain_code_size + i];
+        ec[i] = hd[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + i];
     }
     
     return ec;
 }
 
+void write_chain_code(libbitcoin::wallet::hd_key& hd, const hd_chain_code& cc) {
+    for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
+        hd[hd_key_offset + i] = cc[i];
+    }
+}
+
+void write_public_key(libbitcoin::wallet::hd_key& hd, const ec_compressed ec) {
+    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
+        hd[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + i] = ec[i];
+    }
+}
+
 const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd) {
     ec_secret k;
     for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
-        k[i] = hd[14 + libbitcoin::wallet::hd_chain_code_size + i];
+        k[i] = hd[hd_key_offset + 1 + libbitcoin::wallet::hd_chain_code_size + i];
     }
     
     return k;
@@ -58,11 +72,11 @@ const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key hd) 
     libbitcoin::wallet::hd_key k(hd);
     ec_secret p;
     for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
-        p[i] = hd[13 + libbitcoin::wallet::hd_chain_code_size + 1 + i];
+        p[i] = hd[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + 1 + i];
     }
     ec_compressed pubkey = low::to_public(p);
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
-        k[13 + libbitcoin::wallet::hd_chain_code_size + i] = pubkey[i];
+        k[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + i] = pubkey[i];
     }
     
     return k;
@@ -81,9 +95,21 @@ bool read_notification_payload(payment_code& pc, const output& output) {
     return true;
 }
 
-// TODO
+void write_hd_key(libbitcoin::wallet::hd_key& k, const payment_code& code) {
+    for (int i = 0; i < hd_key_offset; i++) k[i] = 0;
+    write_public_key(k, point(code));
+    write_chain_code(k, chain_code(code));
+    for (int i = hd_key_offset + libbitcoin::ec_compressed_size + libbitcoin::wallet::hd_chain_code_size; i < libbitcoin::wallet::hd_key_size; i++) k[i] = 0;
+}
+
+const libbitcoin::wallet::hd_key to_hd_key(const payment_code& code) {
+    libbitcoin::wallet::hd_key k;
+    write_hd_key(k, code);
+    return k;
+}
+
 const libbitcoin::wallet::hd_public to_hd_public(const payment_code& code) {
-    throw 0;
+    return libbitcoin::wallet::hd_public(to_hd_key(code));
 }
 
 namespace v1
