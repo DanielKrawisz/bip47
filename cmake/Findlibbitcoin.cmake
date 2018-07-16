@@ -1,0 +1,21 @@
+include(FindPkgConfig)
+  PKG_CHECK_MODULES(PC_LIBBITCOIN "libbitcoin")
+
+
+  find_path(
+      LIBBITCOIN_INCLUDE_DIRS
+      NAMES bitcoin/bitcoin.hpp
+      HINTS ${PC_LIBBITCOIN_INCLUDE_DIRS}
+  )
+
+
+  find_library(
+      LIBBITCOIN_LIBRARIES
+      NAMES bitcoin
+      HINTS ${PC_LIBBITCOIN_LIBRARY_DIRS}
+  )
+
+
+  include(FindPackageHandleStandardArgs)
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(LIBBITCOIN DEFAULT_MSG LIBBITCOIN_LIBRARIES LIBBITCOIN_INCLUDE_DIRS)
+  mark_as_advanced(LIBBITCOIN_LIBRARIES LIBBITCOIN_INCLUDE_DIRS)
