@@ -68,20 +68,6 @@ const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd) {
     return k;
 }
 
-const libbitcoin::wallet::hd_key to_public(const libbitcoin::wallet::hd_key hd) {
-    libbitcoin::wallet::hd_key k(hd);
-    ec_secret p;
-    for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
-        p[i] = hd[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + 1 + i];
-    }
-    ec_compressed pubkey = low::to_public(p);
-    for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
-        k[hd_key_offset + libbitcoin::wallet::hd_chain_code_size + i] = pubkey[i];
-    }
-    
-    return k;
-}
-
 bool to(const output& output, const address& notification_address) {
     const auto ops = output.script().operations();
     return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == notification_address);

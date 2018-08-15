@@ -8,15 +8,15 @@
 using namespace bip47;
 
 struct hd_pair {
-    hd_secret secret;
-    hd_public pubkey;
+    hd_secret Secret;
+    hd_public Pubkey;
     
-    bool operator==(hd_pair p) const {
-        return secret == p.secret && pubkey == p.pubkey;
+    bool operator==(const hd_pair& p) const {
+        return Secret == p.Secret && Pubkey == p.Pubkey;
     }
     
-    bool operator!=(hd_pair p) const {
-        return secret != p.secret || pubkey != p.pubkey;
+    bool operator!=(const hd_pair& p) const {
+        return Secret != p.Secret || Pubkey != p.Pubkey;
     }
     
     const libbitcoin::wallet::hd_key libbitcoin_hd_key_pubkey();
@@ -50,7 +50,7 @@ struct test_payment_code {
     
     keypair make_keypair() {
         auto code = make_payment_code();
-        return {key.key, code.point()};
+        return {key.Secret, code.point()};
     }
 };
 

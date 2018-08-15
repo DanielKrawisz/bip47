@@ -11,18 +11,18 @@ namespace bip47
 namespace low
 {
 
-const payment_code new_payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey) {
+const payment_code new_payment_code(payment_code_version version, bool bitmessage_notification, const abstractions::hd::bip32::public_node& pubkey) {
     payment_code code;
     code[0] = version;
     code[1] = bitmessage_notification;
     
     int n = 2;
-    for (auto p : pubkey.point) {
+    for (auto p : pubkey.Point) {
         code[n] = p;
         n++;
     }
     
-    for (auto p : pubkey.chain_code) {
+    for (auto p : pubkey.ChainCode) {
         code[n] = p;
         n++;
     }

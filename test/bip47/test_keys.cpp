@@ -13,7 +13,7 @@ const libbitcoin::wallet::hd_key hd_pair::libbitcoin_hd_key_secret() {
         k[n] = 0;
     }
     for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
-        k[n] = secret.chain_code[i];
+        k[n] = Secret.Pubkey.ChainCode[i];
         n++;
     }
     
@@ -21,7 +21,7 @@ const libbitcoin::wallet::hd_key hd_pair::libbitcoin_hd_key_secret() {
     n++;
     
     for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
-        k[n] = secret.key[i];
+        k[n] = Secret.Secret[i];
         n++;
     }
     
@@ -35,12 +35,12 @@ const libbitcoin::wallet::hd_key hd_pair::libbitcoin_hd_key_pubkey() {
         k[n] = 0;
     }
     for (int i = 0; i < libbitcoin::wallet::hd_chain_code_size; i++) {
-        k[n] = pubkey.chain_code[i];
+        k[n] = Pubkey.ChainCode[i];
         n++;
     }
     
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
-        k[n] = pubkey.point[i];
+        k[n] = Pubkey.Point[i];
         n++;
     }
     
@@ -58,8 +58,9 @@ const libbitcoin::wallet::hd_public hd_pair::libbitcoin_hd_public() {
 const hd_pair hd_from_string(string hd) {
     data_chunk data;
     libbitcoin::decode_base16(data, hd);
-    const hd_secret secret = hd_secret::from_data(data);
-    return {secret, secret.pubkey()};
+    hd_secret secret;
+    hd::from_data(data, secret);
+    return {secret, secret.Pubkey};
 }
 
 // A  bunch of randomly generated test hd keys in base 16.
@@ -118,12 +119,12 @@ string write_test_payment_code(payment_code_version version, const hd_public& pu
     code[1] = bitmessage_notification;
     
     int n = 2;
-    for (auto p : pubkey.point) {
+    for (auto p : pubkey.Point) {
         code[n] = p;
         n++;
     }
     
-    for (auto p : pubkey.chain_code) {
+    for (auto p : pubkey.ChainCode) {
         code[n] = p;
         n++;
     }
@@ -138,16 +139,16 @@ string write_test_payment_code(payment_code_version version, const hd_public& pu
 }
     
 test_payment_code::test_payment_code(payment_code_version version, const hd_secret pk, bool bitmessage_notification)
-    :key(pk), code(write_test_payment_code(version, pk.pubkey(), bitmessage_notification)) {}
+    :key(pk), code(write_test_payment_code(version, pk.Pubkey, bitmessage_notification)) {}
 
 test_payment_code generate_valid_payment_code(hd_pair hd) {
     static payment_code_version test_version = 0;
     test_version = next_test_version(test_version);
-    return test_payment_code(test_version, hd.secret, false);
+    return test_payment_code(test_version, hd.Secret, false);
 }
 
 test_payment_code generate_invalid_payment_code(hd_pair hd) {
-    return test_payment_code(0, hd.secret, false);
+    return test_payment_code(0, hd.Secret, false);
 }
 
 typedef test_payment_code (*payment_code_generator)(hd_pair);

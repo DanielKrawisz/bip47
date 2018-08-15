@@ -34,7 +34,7 @@ TEST(payment_codes, base58_fail) {
 TEST(payment_codes, pubkey) {
     for (test_payment_code test_case : valid_test_payment_codes) {
         payment_code code = payment_code::base58_decode(test_case.code);
-        ASSERT_NO_THROW(EXPECT_TRUE(test_case.key.pubkey() == code.pubkey()));
+        ASSERT_NO_THROW(EXPECT_TRUE(test_case.key.Pubkey == code.pubkey()));
     }
 }
 

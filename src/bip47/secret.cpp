@@ -1,5 +1,6 @@
 #include <bip47/secret.hpp>
 #include <bip47/notification.hpp>
+#include <abstractions/hd/bip32.hpp>
 
 namespace bip47
 {
@@ -8,11 +9,11 @@ bool secret::to(ec_compressed& pubkey, uint32_t n, const payment_code& pc) const
     ec_compressed B = pc.derive_pubkey(n);
     ec_compressed secret_point = B;
     
-    if (!libbitcoin::ec_multiply(secret_point, key.key)) return false;
+    if (!libbitcoin::ec_multiply(secret_point, key.Secret)) return false;
     
     ec_secret s = libbitcoin::sha256_hash(secret_point);
     
-    if (!low::is_secp256k1(s)) return false;
+    //if (!s.valid()) return false;
     
     pubkey = low::point(pc);
     if (!libbitcoin::ec_multiply(pubkey, s)) return false;

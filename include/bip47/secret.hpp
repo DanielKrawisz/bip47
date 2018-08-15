@@ -8,7 +8,7 @@ namespace bip47
 {
 
 struct notification_key {
-    ec_secret secret;
+    hd_secret secret;
     address notification_address;
 };
 
@@ -44,7 +44,7 @@ private:
 };
     
 inline secret::secret(payment_code_version version, bool bitmessage_notification, const hd_secret& pk)
-        :key(pk), code(version, bitmessage_notification, pk.pubkey()) {};
+        :key(pk), code(version, bitmessage_notification, pk.Pubkey) {};
 inline secret::secret(payment_code_version version, const hd_secret& pk):secret(version, false, pk){}
     
 inline bool secret::valid() const {
@@ -52,7 +52,7 @@ inline bool secret::valid() const {
 }
 
 inline const notification_key secret::notification_address(address_format format) const {
-    return {key.key, code.notification_address(format)};
+    return {key, code.notification_address(format)};
 }
 
 namespace low

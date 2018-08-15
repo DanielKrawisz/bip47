@@ -8,6 +8,10 @@ option(BUILD_VERBOSE       "Verbose build output." ON)
 
 option(BUILD_TESTS         "Build the unit tests." ON)
 
+SET(CMAKE_C_COMPILER g++-8)
+SET(CMAKE_CXX_COMPILER g++-8)
+
+set(CMAKE_CXX_FLAGS "-fpermissive")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH  ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -96,13 +100,14 @@ if(BUILD_TESTS)
   enable_testing()
 endif()
 
-
-
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../abstractions/include")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(bip47 SHARED 
+    ../abstractions/src/hd/bip32.cpp
     src/bip47/patterns.cpp
     src/bip47/low.cpp
     src/bip47/hd.cpp
