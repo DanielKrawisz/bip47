@@ -76,17 +76,6 @@ message(STATUS "C++ Flags:       ${CMAKE_CXX_FLAGS}")
 message(STATUS "C++ link flags:  ${CMAKE_CXX_LINK_FLAGS}")
 
 #-----------------------------------------------------------------------------
-# System libraries used for linking.
-
-if(UNIX AND NOT APPLE)
-  list(APPEND OPENTXS_SYSTEM_LIBRARIES dl)
-  if(ANDROID)
-    list(APPEND OPENTXS_SYSTEM_LIBRARIES log)
-  else()
-    list(APPEND OPENTXS_SYSTEM_LIBRARIES rt)
-  endif()
-endif()
-#-----------------------------------------------------------------------------
 # Build Unit tests
 
 if(BUILD_TESTS)
@@ -124,7 +113,7 @@ include_directories(${LIBBITCOIN_INCLUDE_DIRS})
 
 target_link_libraries(bip47 ${LIBBITCOIN_LIBRARIES})
 
-find_package(Boost COMPONENTS system REQUIRED)
+find_package(Boost 1.67.0 COMPONENTS system REQUIRED)
 
 # Locate libraries
 find_package(GTest REQUIRED)
