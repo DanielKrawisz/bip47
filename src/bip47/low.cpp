@@ -1,4 +1,5 @@
 #include <bitcoin/bitcoin/wallet/payment_address.hpp>
+#include <bitcoin/bitcoin/chain/script.hpp>
 #include <bitcoin/bitcoin/math/hash.hpp>
 #include <bip47/payment_code.hpp>
 #include <bip47/notification.hpp>
@@ -11,7 +12,7 @@ namespace low
 
 bool payload(payment_code& out, const output& output) {
     const auto ops = output.script().operations();
-    if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops)) return false;
+    if (!libbitcoin::chain::script::is_null_data_pattern(ops)) return false;
     return from_data(out, ops[1].data());
 }
 
@@ -70,12 +71,12 @@ const ec_secret secret_key(const libbitcoin::wallet::hd_key& hd) {
 
 bool to(const output& output, const address& notification_address) {
     const auto ops = output.script().operations();
-    return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data()) == notification_address);
+    return (libbitcoin::chain::script::is_pay_key_hash_pattern(ops) && address(ops[2].data(), notification_address.version()) == notification_address);
 }
 
 bool read_notification_payload(payment_code& pc, const output& output) {
     const auto ops = output.script().operations();
-    if (!libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == payment_code_size) return false;
+    if (!libbitcoin::chain::script::is_null_data_pattern(ops) && ops[1].data().size() == payment_code_size) return false;
     pc = bip47::payment_code(output.script().operations()[1].data());
     if (!valid(pc)) return false;
     return true;

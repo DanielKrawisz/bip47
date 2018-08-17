@@ -62,7 +62,7 @@ namespace v1
 
 bool is_notification_output(const output& output) {
     const auto ops = output.script().operations();
-    return libbitcoin::chain::script::is_pay_null_data_pattern(ops) && ops[1].data().size() == 80;
+    return libbitcoin::chain::script::is_null_data_pattern(ops) && ops[1].data().size() == 80;
 }
 
 bool valid(const transaction& tx)

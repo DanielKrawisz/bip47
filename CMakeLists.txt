@@ -113,7 +113,7 @@ include_directories(${LIBBITCOIN_INCLUDE_DIRS})
 
 target_link_libraries(bip47 ${LIBBITCOIN_LIBRARIES})
 
-find_package(Boost 1.67.0 COMPONENTS system REQUIRED)
+find_package(Boost 1.58.0 COMPONENTS system REQUIRED)
 
 # Locate libraries
 find_package(GTest REQUIRED)

@@ -4,6 +4,7 @@
 #include <vector>
 #include <bip47/secret.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
+#include <bitcoin/bitcoin/chain/script.hpp>
 
 namespace bip47
 {
@@ -140,7 +141,7 @@ inline const output notification_output(
     const payment_code& bob,
     const outpoint& prior, 
     const ec_secret& designated) {
-    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_pay_null_data_pattern(mask_payment_code(alice, designated, point(bob), prior))));
+    return output(0, libbitcoin::chain::script(libbitcoin::chain::script::to_null_data_pattern(mask_payment_code(alice, designated, point(bob), prior))));
 }
 
 bool is_notification_change_output_pattern(const libbitcoin::machine::operation::list& ops);

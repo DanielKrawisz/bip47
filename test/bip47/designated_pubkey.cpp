@@ -69,7 +69,7 @@ struct test_script {
         for (int i = 0; i < q; i ++) {
             data r;
             libbitcoin::decode_base16(r, "random stuff");
-            prev_outputs[i] = libbitcoin::chain::output(1, libbitcoin::chain::script::to_pay_null_data_pattern(r));
+            prev_outputs[i] = libbitcoin::chain::output(1, libbitcoin::chain::script::to_null_data_pattern(r));
         }
         prev_outputs[q] = libbitcoin::chain::output(1, output_script);
         
