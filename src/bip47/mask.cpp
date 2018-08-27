@@ -10,13 +10,11 @@ namespace low
 
 typedef libbitcoin::long_hash mask;
 
-const mask payment_code_mask(const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint) {
+const bool payment_code_mask(mask& m, const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint) {
     ec_compressed secret_point(point);
     
-    // TODO figure out something better to do here if the operation fails. 
-    if (!libbitcoin::ec_multiply(secret_point, designated)) throw 0;
+    if (!libbitcoin::ec_multiply(secret_point, designated)) return false;
     
-    // TODO replace all the copying with something more efficient. 
     data op = outpoint.to_data();
     
     data splice(libbitcoin::ec_compressed_size + op.size());
@@ -29,7 +27,8 @@ const mask payment_code_mask(const ec_secret& designated, const ec_compressed& p
         n++;
     }
     
-    return libbitcoin::sha512_hash(splice);
+    m = libbitcoin::sha512_hash(splice);
+    return true;
 }
 
 const payment_code mask_payment_code(const low::payment_code& code, const mask mask) {
@@ -43,7 +42,9 @@ const payment_code mask_payment_code(const low::payment_code& code, const mask m
 }
 
 const payment_code mask_payment_code(const low::payment_code& code, const ec_secret& designated, const ec_compressed& point, const outpoint& outpoint) {
-    return mask_payment_code(code, payment_code_mask(designated, point, outpoint));
+    mask m;
+    if (!payment_code_mask(m, designated, point, outpoint)) return null_payment_code;
+    return mask_payment_code(code, m);
 }
 
 bool unmask_payment_code(payment_code& code, const ec_public& designated, const ec_secret& pk, const outpoint& outpoint) {
@@ -51,7 +52,6 @@ bool unmask_payment_code(payment_code& code, const ec_public& designated, const 
     
     if (!libbitcoin::ec_multiply(secret_point, pk)) return false;
     
-    // TODO replace all the copying with something more efficient. 
     data op = outpoint.to_data();
     
     data splice(libbitcoin::ec_compressed_size + op.size());
