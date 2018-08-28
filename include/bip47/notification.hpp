@@ -82,7 +82,7 @@ bool valid(const transaction &tx);
 
 bool to(const transaction& tx, const payment_code_identifier& bob);
 
-bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification);
+bool read(payment_code& out, const transaction& tx, const blockchain& b, const secret& pc);
 
 } // v2
 
@@ -162,7 +162,7 @@ inline bool is_notification_change_output(const output& output) {
     return v1::is_notification_change_output_pattern(output.script().operations());
 }
 
-const bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id);
+const bool is_notification_change_output_to(const output& output, const payment_code_identifier bob_id);
 
 } // v2
 

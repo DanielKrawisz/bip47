@@ -120,9 +120,23 @@ bool to(const transaction& tx, const payment_code_identifier& bob) {
     return false;
 }
 
-// TODO
-bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification) {
-    throw 0;
+bool read(payment_code& out, const transaction& tx, const blockchain& b, const secret& pc) {    
+    // Find designated pubkey. 
+    ec_public designated;
+    outpoint op;
+    if (!low::designated_pubkey_and_outpoint(designated, op, b, tx)) return false;
+    
+    // Find a valid notification output. 
+    for (const auto output : tx.outputs()) if (low::v2::is_notification_change_output_to(output, pc.code.identifier())) {
+        // If this is not a version 2 payment code continue. 
+        if (out.version() != 2) continue;
+        
+        if (!low::unmask_payment_code(out, designated, pc.key.Secret, op)) continue;
+        
+        if (!abstractions::hd::bip32::valid_public_key(out.point())) continue;
+    }
+    
+    return false;
 }
     
 } // v2

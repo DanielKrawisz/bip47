@@ -8,6 +8,9 @@
 #include <bitcoin/bitcoin/wallet/ec_public.hpp>
 #include <bip47/notification.hpp>
 
+#include <iostream>
+//#include <boost/algorithm/hex.hpp>
+
 namespace bip47
 {
     
@@ -52,83 +55,18 @@ libbitcoin::machine::operation push(std::string str) {
 }
 
 struct test_blockchain : public blockchain {
-    const unsigned int size;
-    const std::vector<transaction>& pr;
-
-    // Keep track of which txs have been matched.
-    mutable std::vector<bool> matched;
-
-    // Keep track of which txs have been seen;
-    mutable std::vector<bool> seen;
-
-    mutable std::vector<transaction> txs;
-    mutable std::vector<libbitcoin::hash_digest> hashes;
-    
-    mutable std::map<libbitcoin::hash_digest, transaction*> indices;
+    mutable std::map<libbitcoin::hash_digest, const transaction*> indices;
 
     output previous(const outpoint previous_output) const final override
     {
         // first look in the map. 
-        transaction* pp = indices[previous_output.hash()];
+        const transaction* pp = indices[previous_output.hash()];
         if (pp != nullptr) return pp->outputs()[previous_output.index()];
-        
-        // look for it among unmatched txs.
-        for (unsigned int i = 0; i < size; i++) {
-            // skip txs that have already been matched.
-            if (matched[i]) continue;
-
-            // The previous tx corresponding to this index.
-            transaction prev;
-
-            // The hash of the previous tx corresponding to this index.
-            libbitcoin::hash_digest id;
-
-            if (seen[i]) {
-                prev = txs[i];
-                id = hashes[i];
-            } else {
-                prev = pr[i];
-                id = prev.hash();
-            }
-
-            // If the hashes don't match, save these and try the next one.
-            if (id != previous_output.hash()) {
-                txs[i] = prev;
-                indices.insert(std::make_pair(id, &txs[i]));
-                hashes[i] = id;
-                seen[i] = true;
-
-                continue;
-            }
-
-            matched[i] = true;
-
-            auto outputs = prev.outputs();
-            if (previous_output.index() < outputs.size()) {
-                return prev.outputs()[previous_output.index()];
-            }
-
-            // Error case if the input doesn't correspond to an output.
-            return libbitcoin::chain::output();
-        }
-
-        // Invalid output if we go through the whole list and don't find
-        // what we're looking for.
-        return libbitcoin::chain::output();
+        return output();
     }
 
-    test_blockchain(const std::vector<transaction>& p)
-        : size(p.size())
-        , pr(p)
-        , matched(std::vector<bool>(size))
-        , seen(std::vector<bool>(size))
-        , txs(std::vector<libbitcoin::chain::transaction>(size))
-        , hashes(std::vector<libbitcoin::hash_digest>(size))
-    {
-        for (int i = 0; i < size; i++) {
-            matched[i] = false;
-            seen[i] = false;
-        }
+    test_blockchain(const std::vector<transaction>& p) {
+        for (int i = 0; i < p.size(); i++) indices.insert(std::make_pair(p[i].hash(), &(p[i])));
     }
 };
 
@@ -211,7 +149,12 @@ struct test_script {
         
         ec_public extracted_pubkey;
         outpoint extracted_outpoint;
+        
+        std::cout << "mlml" << std::endl;
+        
         if (!low::designated_pubkey_and_outpoint(extracted_pubkey, extracted_outpoint, b, tx)) return false;
+        
+        std::cout << "zmlmlml" << std::endl;
         return extracted_pubkey == expected_pubkey && extracted_outpoint == expected_outpoint;
     }
     
@@ -309,6 +252,15 @@ std::queue<test_case> multisig_test_cases() {
     return test_cases;
 }
 
+/*TEST(bip47_designated_pubkey, out_of_order) {
+    auto key = pks[0].to_public();
+    for (int i = 1; i < 3; i++) {
+        for (int j = 1; j < 3; j++) {
+            ASSERT_NO_FATAL_FAILURE(test_script::p2pk(key, "abcd").test(key, i, j));
+        }
+    }
+}*/
+
 // Test that a basic pay to pubkey tx is recognized and has the correct pubkey returned. 
 TEST(bip47_designated_pubkey, pay_to_pubkey) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
@@ -317,16 +269,7 @@ TEST(bip47_designated_pubkey, pay_to_pubkey) {
    }
 }
 
-TEST(bip47_designated_pubkey, out_of_order) {
-    auto key = pks[0].to_public();
-    for (int i = 1; i < 3; i++) {
-        for (int j = 1; j < 3; j++) {
-            ASSERT_NO_FATAL_FAILURE(test_script::p2pk(key, "abcd").test(key, i, j));
-        }
-    }
-}
-
-TEST(bip47_designated_pubkey, pay_to_pubkey_hash) {
+/*TEST(bip47_designated_pubkey, pay_to_pubkey_hash) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
        auto pub = it->to_public();
        EXPECT_TRUE(test_script::p2pkh(pub, "abcd").test(pub));
@@ -367,6 +310,6 @@ TEST(bip47_designated_pubkey, multisig_p2sh) {
         test_cases.pop();
         i++;
     }
-}
+}*/
 
 } // bip47

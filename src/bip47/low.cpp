@@ -129,7 +129,7 @@ const output inline notification_change_output(const ec_compressed& alice, const
     return output(amount, libbitcoin::chain::script::to_pay_multisig_pattern(1, {alice, bob_id}));
 }
 
-const bool is_notification_change_output_to(const output& output, const payment_code_identifier& bob_id) {
+const bool is_notification_change_output_to(const output& output, const payment_code_identifier bob_id) {
     if (!is_notification_change_output(output)) return false;
     identifier_equals(bob_id, output.script().operations()[1].data());
     return true;
