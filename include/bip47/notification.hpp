@@ -10,8 +10,13 @@ namespace bip47
 {
 
 typedef libbitcoin::chain::output output;
+typedef libbitcoin::chain::output_point outpoint;
 typedef libbitcoin::chain::transaction transaction;
 typedef libbitcoin::wallet::ec_public ec_public;
+
+struct blockchain {
+    virtual output previous(const outpoint) const = 0;
+};
 
 namespace notifications
 {
@@ -26,7 +31,7 @@ const transaction notify(
     const payment_code& alice, 
     const payment_code& bob, 
     const ec_secret& designated,                // The private key used to redeem the prior transaction. 
-    const outpoint& prior,                       // outpoint to the prior transaction containing the designated pubkey. 
+    const outpoint& prior,                      // outpoint to the prior transaction containing the designated pubkey. 
     address_format format,
     unsigned int amount,
     const transaction::outs other_outputs={}
@@ -37,7 +42,7 @@ const transaction notify(
     const payment_code& alice, 
     const payment_code& bob, 
     const ec_secret& designated,                // The private key used to redeem the prior transaction. 
-    const transaction& prior,                    // A transaction with an output that can be redeemed with the key. 
+    const transaction& prior,                   // A transaction with an output that can be redeemed with the key. 
     address_format format,
     unsigned int amount,
     const transaction::outs other_outputs={}
@@ -47,7 +52,7 @@ bool valid(const transaction &tx);
 
 bool to(const transaction& tx, const address& notification_address);
 
-bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const notification_key& notification_address);
+bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification);
 
 } // v1
 
@@ -77,7 +82,7 @@ bool valid(const transaction &tx);
 
 bool to(const transaction& tx, const payment_code_identifier& bob);
 
-bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const payment_code_identifier& bob);
+bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification);
 
 } // v2
 
@@ -129,7 +134,7 @@ inline const address to_payment_address(const ec_secret& key, const address_form
 
 bool read_notification_payload(payment_code& out, const output& output);
 
-bool designated_pubkey(ec_public& designated, const std::vector<transaction>& previous, const transaction& nt);
+bool designated_pubkey_and_outpoint(ec_public& designated, outpoint& op, const blockchain&, const transaction& nt);
 
 bool unmask_payment_code(payment_code& code, const ec_public& designated, const ec_secret& pk, const outpoint& outpoint);
 

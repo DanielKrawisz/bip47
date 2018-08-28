@@ -19,7 +19,7 @@ typedef libbitcoin::chain::output_point outpoint;
 typedef ec_compressed payment_code_identifier;
 
 const int payment_code_size = 80;
-const uint8_t bitmessage_notification_flag = 1;// low contains low-level functions. 
+const uint8_t bitmessage_notification_flag = 1;
 
 // namespace low is for low-level functions and constructs.
 namespace low

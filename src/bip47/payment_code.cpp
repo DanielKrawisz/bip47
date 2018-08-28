@@ -104,6 +104,7 @@ const hd_chain_code chain_code(const payment_code& code) {
 }
 
 inline void invalidate(payment_code& code) {
+    // setting the version to zero insures that valid() returns false. 
     code[0] = 0;
 }
 

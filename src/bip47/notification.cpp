@@ -40,6 +40,7 @@ const transaction notify_v1_and_v2(
     const transaction::outs& other_outputs)
 {
     // TODO policy as to ordering of outputs?
+    // Any such policy is independent of this library. 
     transaction::outs outputs(other_outputs.size() + 2);
     outputs.push_back(opa);
     outputs.push_back(opb);
@@ -76,25 +77,23 @@ bool to(const transaction& tx, const address& notification_address) {
     return false;
 }
 
-bool read(payment_code& pc, const std::vector<transaction>& previous, const transaction& tx, const notification_key& notification) {
+bool read(payment_code& out, const transaction& tx, const blockchain& b, const notification_key& notification) {
     // Is this a transaction to the notification address? 
     if (!to(tx, notification.notification_address)) return false;
     
+    // Find designated pubkey. 
+    ec_public designated;
+    outpoint op;
+    if (!low::designated_pubkey_and_outpoint(designated, op, b, tx)) return false;
+    
     // Find a valid notification output. 
-    for (const auto output : tx.outputs()) if (low::read_notification_payload(pc, output)) {        
-        // If this is not a version 1 payment code, try again. TODO does this make sense? 
-        // maybe we know how to use version 2 payment codes?
-        if (pc.version() != 1) continue;
+    for (const auto output : tx.outputs()) if (low::read_notification_payload(out, output)) {
+        // If this is not a version 1 payment code continue. 
+        if (out.version() != 1) continue;
         
-        // Extract designated pubkey. 
-        ec_public designated;
-        if (!low::designated_pubkey(designated, previous, tx)) continue;
+        if (!low::unmask_payment_code(out, designated, notification.secret.Secret, op)) continue;
         
-        // TODO figure out how to get the outpoint. 
-        // if (!low::unmask_payment_code(pc, notification.secret, designated, )) continue;
-        
-        // TODO check secp256k1 group membership. 
-        return true;
+        if (!abstractions::hd::bip32::valid_public_key(out.point())) continue;
     }
     
     return false;
@@ -122,7 +121,7 @@ bool to(const transaction& tx, const payment_code_identifier& bob) {
 }
 
 // TODO
-bool read(payment_code& out, const std::vector<transaction>& previous, const transaction& tx, const payment_code_identifier& bob) {
+bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification) {
     throw 0;
 }
     

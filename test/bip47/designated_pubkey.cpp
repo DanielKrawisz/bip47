@@ -10,6 +10,8 @@
 
 namespace bip47
 {
+    
+typedef libbitcoin::chain::script script;
 
 // Some randomly generated private keys that we use to make test scripts. 
 std::vector<libbitcoin::wallet::ec_private> pks = {
@@ -49,6 +51,87 @@ libbitcoin::machine::operation push(std::string str) {
     return push(in);
 }
 
+struct test_blockchain : public blockchain {
+    const unsigned int size;
+    const std::vector<transaction>& pr;
+
+    // Keep track of which txs have been matched.
+    mutable std::vector<bool> matched;
+
+    // Keep track of which txs have been seen;
+    mutable std::vector<bool> seen;
+
+    mutable std::vector<transaction> txs;
+    mutable std::vector<libbitcoin::hash_digest> hashes;
+    
+    mutable std::map<libbitcoin::hash_digest, transaction*> indices;
+
+    output previous(const outpoint previous_output) const final override
+    {
+        // first look in the map. 
+        transaction* pp = indices[previous_output.hash()];
+        if (pp != nullptr) return pp->outputs()[previous_output.index()];
+        
+        // look for it among unmatched txs.
+        for (unsigned int i = 0; i < size; i++) {
+            // skip txs that have already been matched.
+            if (matched[i]) continue;
+
+            // The previous tx corresponding to this index.
+            transaction prev;
+
+            // The hash of the previous tx corresponding to this index.
+            libbitcoin::hash_digest id;
+
+            if (seen[i]) {
+                prev = txs[i];
+                id = hashes[i];
+            } else {
+                prev = pr[i];
+                id = prev.hash();
+            }
+
+            // If the hashes don't match, save these and try the next one.
+            if (id != previous_output.hash()) {
+                txs[i] = prev;
+                indices.insert(std::make_pair(id, &txs[i]));
+                hashes[i] = id;
+                seen[i] = true;
+
+                continue;
+            }
+
+            matched[i] = true;
+
+            auto outputs = prev.outputs();
+            if (previous_output.index() < outputs.size()) {
+                return prev.outputs()[previous_output.index()];
+            }
+
+            // Error case if the input doesn't correspond to an output.
+            return libbitcoin::chain::output();
+        }
+
+        // Invalid output if we go through the whole list and don't find
+        // what we're looking for.
+        return libbitcoin::chain::output();
+    }
+
+    test_blockchain(const std::vector<transaction>& p)
+        : size(p.size())
+        , pr(p)
+        , matched(std::vector<bool>(size))
+        , seen(std::vector<bool>(size))
+        , txs(std::vector<libbitcoin::chain::transaction>(size))
+        , hashes(std::vector<libbitcoin::hash_digest>(size))
+    {
+        for (int i = 0; i < size; i++) {
+            matched[i] = false;
+            seen[i] = false;
+        }
+    }
+};
+
 struct test_script {
     libbitcoin::machine::operation::list input_script, output_script;
     
@@ -61,7 +144,7 @@ struct test_script {
     };
     
     // test this script to see that the value read matches the given expected value.
-    bool test(libbitcoin::wallet::ec_public expected,
+    bool test(libbitcoin::wallet::ec_public expected_pubkey,
               unsigned int p, // The index of the redeemed tx in the unsorted list of previous txs.
               unsigned int q  // The index of the output which is redeemed by the notification tx.
              ) {
@@ -108,7 +191,8 @@ struct test_script {
         
         // Create the inputs to the test tx. The correct one is always the first one. 
         std::vector<libbitcoin::chain::input> inputs(p + 1);
-        inputs[0] = libbitcoin::chain::input(libbitcoin::chain::output_point(prev_hash, q), input_script, 0);
+        outpoint expected_outpoint = libbitcoin::chain::output_point(prev_hash, q);
+        inputs[0] = libbitcoin::chain::input(expected_outpoint, input_script, 0);
         for (int i = 0; i < p; i ++) {
             data pk;
             prev_keys[i].to_data(pk);
@@ -123,21 +207,24 @@ struct test_script {
         
         if (!tx.is_valid()) return false;
         
-        ec_public extracted;
-        if (!low::designated_pubkey(extracted, prev_list, tx)) return false;
-        return extracted == expected;
+        test_blockchain b = test_blockchain(prev_list);
+        
+        ec_public extracted_pubkey;
+        outpoint extracted_outpoint;
+        if (!low::designated_pubkey_and_outpoint(extracted_pubkey, extracted_outpoint, b, tx)) return false;
+        return extracted_pubkey == expected_pubkey && extracted_outpoint == expected_outpoint;
     }
     
     // test this script to see that the value read matches the given expected value.
-    bool test(libbitcoin::wallet::ec_public expected) {
-        return test(expected, 0, 0);
+    bool test(ec_public expected_pubkey) {
+        return test(expected_pubkey, 0, 0);
     }
 
     // Generate standard test scripts. 
-    static test_script p2pk(libbitcoin::wallet::ec_public key, std::string signature) {
+    static test_script p2pk(ec_public key, std::string signature) {
         libbitcoin::data_chunk pk;
         key.to_data(pk);
-        return {{push(signature)}, libbitcoin::chain::script::to_pay_public_key_pattern(pk)};
+        return {{push(signature)}, script::to_pay_public_key_pattern(pk)};
     }
 
     static test_script p2pkh(libbitcoin::wallet::ec_public key, std::string signature) {
@@ -167,15 +254,15 @@ struct test_script {
 };
 
 struct test_case {
-    libbitcoin::wallet::ec_public expected;
+    ec_public expected_pubkey;
     test_script script;
     
     bool test() {
-        return script.test(expected);
+        return script.test(expected_pubkey);
     }
     
     bool test_p2sh() {
-        return script.p2sh().test(expected);
+        return script.p2sh().test(expected_pubkey);
     }
     
     std::string to_string() {
@@ -205,15 +292,15 @@ std::queue<test_case> multisig_test_cases() {
             for(int order = 0; order < pks.size(); order ++) {
                 std::queue<libbitcoin::ec_compressed> keys;
             
-                libbitcoin::ec_compressed expected = pub.at(order);
-                keys.push(expected);
+                libbitcoin::ec_compressed expected_pubkey = pub.at(order);
+                keys.push(expected_pubkey);
                 
                 for (int i = 1; i < size; i++) {
                     keys.push(pub.at((order + i)%pub.size()));
                 }
                 
                 test_cases.push({
-                    expected,
+                    expected_pubkey,
                     test_script::p2multi(sig, of, keys)});
             }
         }
