@@ -49,18 +49,18 @@ bool extract_designated_pubkey(
         return false;
     }
 
-    if (libbitcoin::chain::is_public_key_pattern(input)) {
+    if (libbitcoin::chain::is_sign_script_hash_pay_public_key_pattern(input)) {
         out = input[1].data();
         return true;
     }
 
-    if (libbitcoin::chain::is_key_hash_pattern(input)) {
+    if (libbitcoin::chain::is_sign_script_hash_pay_key_hash_pattern(input)) {
         out = input[1].data();
         return true;
     }
 
     unsigned int middle;
-    if (libbitcoin::chain::is_multisig_script_hash_pattern(middle, input)) {
+    if (libbitcoin::chain::is_sign_script_hash_pay_multisig_pattern(middle, input)) {
         out = input[middle + 1].data();
         return true;
     }

@@ -7,13 +7,13 @@ namespace libbitcoin
 namespace chain
 {
 
-bool is_public_key_pattern(const machine::operation::list& ops)
+bool is_sign_script_hash_pay_public_key_pattern(const machine::operation::list& ops)
 {
     return ops.size() == 3 && is_public_key(ops[1].data()) &&
            ops[2].code() == machine::opcode::checksig;
 }
 
-bool is_key_hash_pattern(const machine::operation::list& ops)
+bool is_sign_script_hash_pay_key_hash_pattern(const machine::operation::list& ops)
 {
     return ops.size() == 7 && is_public_key(ops[1].data()) &&
            ops[2].code() == machine::opcode::dup && ops[3].code() == machine::opcode::hash160 &&
@@ -22,7 +22,7 @@ bool is_key_hash_pattern(const machine::operation::list& ops)
            ops[6].code() == machine::opcode::checksig;
 }
 
-bool is_multisig_script_hash_pattern(
+bool is_sign_script_hash_pay_multisig_pattern(
     unsigned int& middle,
     const machine::operation::list& ops)
 {
