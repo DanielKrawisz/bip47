@@ -9,7 +9,7 @@
 #include <bip47/notification.hpp>
 
 #include <iostream>
-//#include <boost/algorithm/hex.hpp>
+#include <bitcoin/bitcoin/formats/base_16.hpp>
 
 namespace bip47
 {
@@ -46,11 +46,6 @@ libbitcoin::machine::operation push(data chunk) {
 libbitcoin::machine::operation push(std::string str) {
     data in;
     libbitcoin::decode_base16(in, str);
-    uint8_t size = in.size();
-    if (size < 1 || size > 75) {
-        // error state
-    }
-    in.insert(in.begin(), &size, &size + 1);
     return push(in);
 }
 
@@ -82,7 +77,7 @@ struct test_script {
     };
     
     // test this script to see that the value read matches the given expected value.
-    bool test(libbitcoin::wallet::ec_public expected_pubkey,
+    bool test(ec_compressed expected_pubkey,
               unsigned int p, // The index of the redeemed tx in the unsorted list of previous txs.
               unsigned int q  // The index of the output which is redeemed by the notification tx.
              ) {
@@ -150,16 +145,14 @@ struct test_script {
         ec_public extracted_pubkey;
         outpoint extracted_outpoint;
         
-        std::cout << "mlml" << std::endl;
+        if (!low::designated_pubkey_and_outpoint(extracted_pubkey, extracted_outpoint, b, tx)) 
+            return false;
         
-        if (!low::designated_pubkey_and_outpoint(extracted_pubkey, extracted_outpoint, b, tx)) return false;
-        
-        std::cout << "zmlmlml" << std::endl;
-        return extracted_pubkey == expected_pubkey && extracted_outpoint == expected_outpoint;
+        return extracted_pubkey.point() == expected_pubkey && extracted_outpoint == expected_outpoint;
     }
     
     // test this script to see that the value read matches the given expected value.
-    bool test(ec_public expected_pubkey) {
+    bool test(ec_compressed expected_pubkey) {
         return test(expected_pubkey, 0, 0);
     }
 
@@ -167,7 +160,9 @@ struct test_script {
     static test_script p2pk(ec_public key, std::string signature) {
         libbitcoin::data_chunk pk;
         key.to_data(pk);
-        return {{push(signature)}, script::to_pay_public_key_pattern(pk)};
+        libbitcoin::machine::operation::list pay_pattern = script::to_pay_public_key_pattern(pk);
+        libbitcoin::machine::operation::list sign_pattern = {push(signature)};
+        return {sign_pattern, pay_pattern};
     }
 
     static test_script p2pkh(libbitcoin::wallet::ec_public key, std::string signature) {
@@ -215,7 +210,7 @@ struct test_case {
 
 // Generate a set of multisig test cases. 
 std::queue<test_case> multisig_test_cases() {
-    std::vector<std::string> signatures = {"abcd", "0123", "4567"};
+    std::vector<std::string> signatures = {"abcd0000000000000000", "01230000000000000000", "45670000000000000000"};
     std::queue<test_case> test_cases;
     
     std::vector<libbitcoin::ec_compressed> pub(pks.size());
@@ -252,41 +247,41 @@ std::queue<test_case> multisig_test_cases() {
     return test_cases;
 }
 
-/*TEST(bip47_designated_pubkey, out_of_order) {
+TEST(bip47_designated_pubkey, out_of_order) {
     auto key = pks[0].to_public();
     for (int i = 1; i < 3; i++) {
         for (int j = 1; j < 3; j++) {
             ASSERT_NO_FATAL_FAILURE(test_script::p2pk(key, "abcd").test(key, i, j));
         }
     }
-}*/
+}
 
 // Test that a basic pay to pubkey tx is recognized and has the correct pubkey returned. 
 TEST(bip47_designated_pubkey, pay_to_pubkey) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
        auto pub = it->to_public();
-       EXPECT_TRUE(test_script::p2pk(pub, "abcd").test(pub));
+       EXPECT_TRUE(test_script::p2pk(pub, "abcd0000000000000000").test(pub));
    }
 }
 
-/*TEST(bip47_designated_pubkey, pay_to_pubkey_hash) {
+TEST(bip47_designated_pubkey, pay_to_pubkey_hash) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
        auto pub = it->to_public();
-       EXPECT_TRUE(test_script::p2pkh(pub, "abcd").test(pub));
+       EXPECT_TRUE(test_script::p2pkh(pub, "abcd0000000000000000").test(pub));
    }
 }
 
 TEST(bip47_designated_pubkey, pay_to_pubkey_p2sh) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
        auto pub = it->to_public();
-       EXPECT_TRUE(test_script::p2pk(pub, "abcd").p2sh().test(pub));
+       EXPECT_TRUE(test_script::p2pk(pub, "abcd0000000000000000").p2sh().test(pub));
    }
 }
 
 TEST(bip47_designated_pubkey, pay_to_pubkey_hash_p2sh) {
    for (std::vector<libbitcoin::wallet::ec_private>::iterator it = pks.begin(); it != pks.end(); ++it) {
        auto pub = it->to_public();
-       EXPECT_TRUE(test_script::p2pkh(pub, "abcd").p2sh().test(pub));
+       EXPECT_TRUE(test_script::p2pkh(pub, "abcd0000000000000000").p2sh().test(pub));
    }
 }
 
@@ -310,6 +305,6 @@ TEST(bip47_designated_pubkey, multisig_p2sh) {
         test_cases.pop();
         i++;
     }
-}*/
+}
 
 } // bip47

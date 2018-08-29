@@ -14,7 +14,7 @@ typedef libbitcoin::wallet::ec_public ec_public;
 typedef libbitcoin::data_chunk data_chunk;
 
 bool extract_designated_pubkey(
-    ec_public& out,
+    data_chunk& out,
     const libbitcoin::machine::operation::list& input,
     const libbitcoin::machine::operation::list& prevout_script)
 {
@@ -71,7 +71,6 @@ bool extract_designated_pubkey(
 namespace low
 {
 
-// The previous transactions are not necessarily given in order.
 bool designated_pubkey_and_outpoint(
     ec_public& designated,
     outpoint& op, 
@@ -88,11 +87,13 @@ bool designated_pubkey_and_outpoint(
         // found it, then we have to return false. 
         if (o == output()) return false;
 
+        data_chunk pubkey;
         if (extract_designated_pubkey(
-                designated,
+                pubkey,
                 in.script().operations(),
                 o.script().operations())) {
             op = in.previous_output();
+            designated = ec_public(pubkey);
             return true;
         }
     }
