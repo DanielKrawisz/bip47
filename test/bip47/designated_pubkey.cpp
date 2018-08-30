@@ -49,10 +49,10 @@ libbitcoin::machine::operation push(std::string str) {
     return push(in);
 }
 
-struct test_blockchain : public blockchain {
+struct test_blockchain : public abstractions::redeem::blockchain<const outpoint, const output> {
     mutable std::map<libbitcoin::hash_digest, const transaction*> indices;
 
-    output previous(const outpoint previous_output) const final override
+    const output operator()(const outpoint previous_output) const final override
     {
         // first look in the map. 
         const transaction* pp = indices[previous_output.hash()];

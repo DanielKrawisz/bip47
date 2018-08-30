@@ -5,6 +5,7 @@
 #include <bip47/secret.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bitcoin/bitcoin/chain/script.hpp>
+#include <abstractions/redeem/blockchain.hpp>
 
 namespace bip47
 {
@@ -14,9 +15,7 @@ typedef libbitcoin::chain::output_point outpoint;
 typedef libbitcoin::chain::transaction transaction;
 typedef libbitcoin::wallet::ec_public ec_public;
 
-struct blockchain {
-    virtual output previous(const outpoint) const = 0;
-};
+using blockchain = abstractions::redeem::blockchain<const outpoint, const output>;
 
 namespace notifications
 {

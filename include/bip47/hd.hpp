@@ -15,8 +15,8 @@ typedef libbitcoin::ec_secret ec_secret;
 typedef libbitcoin::wallet::hd_chain_code hd_chain_code;
 typedef libbitcoin::data_chunk data_chunk;
 
-typedef abstractions::hd::bip32::public_node hd_public;
-typedef abstractions::hd::bip32::private_node hd_secret;
+typedef abstractions::hd::secp256k1::public_node hd_public;
+typedef abstractions::hd::secp256k1::private_node hd_secret;
 
 namespace hd
 {
