@@ -93,7 +93,7 @@ bool read(payment_code& out, const transaction& tx, const blockchain& b, const n
         
         if (!low::unmask_payment_code(out, designated, notification.secret.Secret, op)) continue;
         
-        if (!abstractions::hd::bip32::valid_public_key(out.point())) continue;
+        if (!abstractions::valid(out.point())) continue;
     }
     
     return false;
@@ -133,7 +133,7 @@ bool read(payment_code& out, const transaction& tx, const blockchain& b, const s
         
         if (!low::unmask_payment_code(out, designated, pc.key.Secret, op)) continue;
         
-        if (!abstractions::hd::bip32::valid_public_key(out.point())) continue;
+        if (!abstractions::valid(out.point())) continue;
     }
     
     return false;

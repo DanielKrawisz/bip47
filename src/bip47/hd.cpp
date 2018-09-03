@@ -44,7 +44,7 @@ bool from_data(const data_chunk data, hd_public& h)
         return false;
     int n = 0;
     for (int i = 0; i < libbitcoin::ec_compressed_size; i++) {
-        h.Point[i] = data[n];
+        h.Point.at(i) = data[n];
         n++;
     }
     
@@ -60,7 +60,7 @@ bool from_data(const data_chunk data, hd_secret& h) {
         return false;
     int n = 0;
     for (int i = 0; i < libbitcoin::ec_secret_size; i++) {
-        h.Secret[i] = data[n];
+        h.Secret.at(i) = data[n];
         n++;
     }
     

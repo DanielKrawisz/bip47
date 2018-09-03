@@ -45,7 +45,7 @@ struct payment_code : public low::payment_code {
     payment_code();
     payment_code(const low::payment_code code);
     payment_code(payment_code_version version, bool bitmessage_notification, const hd_public& pubkey);
-    payment_code(payment_code_version version, const abstractions::hd::bip32::public_node& pubkey);
+    payment_code(payment_code_version version, const abstractions::hd::secp256k1::public_node& pubkey);
     payment_code(const data_chunk data);
 
     static const payment_code base58_decode(std::string string);
@@ -62,7 +62,7 @@ const payment_code null_payment_code{
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-const payment_code new_payment_code(payment_code_version version, bool bitmessage_notification, const abstractions::hd::bip32::public_node& pubkey);
+const payment_code new_payment_code(payment_code_version version, bool bitmessage_notification, const abstractions::hd::secp256k1::public_node& pubkey);
 
 bool valid(const payment_code& code);
 
@@ -144,9 +144,9 @@ inline const address payment_code::notification_address(address_format format) c
 
 inline payment_code::payment_code():low::payment_code(low::null_payment_code){}
 inline payment_code::payment_code(const low::payment_code code):low::payment_code(code) {}
-inline payment_code::payment_code(payment_code_version version, bool bitmessage_notification, const abstractions::hd::bip32::public_node& pubkey)
+inline payment_code::payment_code(payment_code_version version, bool bitmessage_notification, const abstractions::hd::secp256k1::public_node& pubkey)
         :low::payment_code(low::new_payment_code(version, bitmessage_notification, pubkey)){}
-inline payment_code::payment_code(payment_code_version version, const abstractions::hd::bip32::public_node& pubkey):payment_code(version, false, pubkey){}
+inline payment_code::payment_code(payment_code_version version, const abstractions::hd::secp256k1::public_node& pubkey):payment_code(version, false, pubkey){}
 
 } // bip47
 
