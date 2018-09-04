@@ -5,77 +5,11 @@
 namespace bip47
 {
 
-// TODO
-void sign_transaction(transaction& incomplete, const ec_secret& key) {
-    throw 0;
-}
-
-namespace low
-{
-
-//TODO should we check for anything other than pay to pubkey and pay to pubkey hash?
-// There should also be multisig and pay to script hash versions of each. 
-const outpoint find_redeemable_output(const transaction& tx, const ec_secret& pk, address_format format) {
-    const auto pubkey = low::to_public(pk);
-    const address address = low::to_payment_address(pk, format);
-    for (auto o : tx.outputs()) {
-        const auto ops = o.script().operations();
-        if (libbitcoin::chain::script::is_pay_key_hash_pattern(ops)) {
-            // TODO Is the address one we can redeem? 
-        } else if (libbitcoin::chain::script::is_pay_public_key_pattern(ops)) {
-            // TODO Is the public key one we can redeem?
-        }
-    }
-    return outpoint();
-}
-
-const transaction notify_v1_and_v2(
-    const payment_code& alice, 
-    const payment_code& bob,
-    const output opa, 
-    const output opb, 
-    const ec_secret& designated,
-    const outpoint& prior, 
-    unsigned int amount,
-    const transaction::outs& other_outputs)
-{
-    // TODO policy as to ordering of outputs?
-    // Any such policy is independent of this library. 
-    transaction::outs outputs(other_outputs.size() + 2);
-    outputs.push_back(opa);
-    outputs.push_back(opb);
-    for (output n : other_outputs) {
-        outputs.push_back(n);
-    }
-    // TODO insert input for signing.
-    transaction nt(1, 0, {}, outputs);
-    sign_transaction(nt, designated);
-    return nt;
-}
-
-} // low
-
 namespace notifications
 {
 
 namespace v1
 {
-
-bool is_notification_output(const output& output) {
-    const auto ops = output.script().operations();
-    return libbitcoin::chain::script::is_null_data_pattern(ops) && ops[1].data().size() == 80;
-}
-
-bool valid(const transaction& tx)
-{
-    for (const auto output : tx.outputs()) if (is_notification_output(output)) return true;
-    return false;
-}
-
-bool to(const transaction& tx, const address& notification_address) {
-    for (const auto output : tx.outputs()) if (low::to(output, notification_address)) return true;     
-    return false;
-}
 
 bool read(payment_code& out, const transaction& tx, const blockchain& b, const notification_key& notification) {
     // Is this a transaction to the notification address? 
@@ -170,22 +104,6 @@ bool is_notification_pattern(const libbitcoin::machine::operation::list& ops) {
 bool inline valid(const output& output) {
     return is_notification_pattern(output.script().operations());
 }
-
-/*
-const output inline notify(
-    const payment_code& alice, 
-    const payment_code& bob, 
-    unsigned int amount, 
-    const ec_secret& designated, 
-    const outpoint& prior) {
-    // TODO randomization/ordering policy? 
-    return output(amount,
-        libbitcoin::chain::to_pay_multisig_pattern(1,
-            {libbitcoin::to_chunk(low::to_public(designated)),
-                libbitcoin::to_chunk(bob.identifier()),
-                low::masked_pubkey(alice, low::payment_code_mask(designated, bob.point(), prior))}));
-}
-*/
 
 bool to(const transaction& tx, const ec_compressed& bob_id)
 {
