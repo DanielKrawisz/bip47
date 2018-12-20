@@ -5,17 +5,19 @@
 #include <bip47/secret.hpp>
 #include <bitcoin/bitcoin/chain/transaction.hpp>
 #include <bitcoin/bitcoin/chain/script.hpp>
-#include <abstractions/blockchain/blockchain.hpp>
+#include <abstractions/association.hpp>
 
 namespace bip47
 {
 
-typedef libbitcoin::chain::output output;
-typedef libbitcoin::chain::output_point outpoint;
-typedef libbitcoin::chain::transaction transaction;
-typedef libbitcoin::wallet::ec_public ec_public;
+    using output = libbitcoin::chain::output;
+    using outpoint = libbitcoin::chain::output_point;
+    using transaction = libbitcoin::chain::transaction;
+    using ec_public = libbitcoin::wallet::ec_public;
 
-using blockchain = abstractions::blockchain<const outpoint, const output>;
+    using N = abstractions::N;
+
+    using blockchain = abstractions::association<const outpoint, const output>;
 
     namespace notifications
     {
@@ -30,6 +32,23 @@ using blockchain = abstractions::blockchain<const outpoint, const output>;
             bool to(const transaction& tx, const address& notification_address);
 
             bool read(payment_code& out, const transaction& tx, const blockchain&, const notification_key& notification);
+            
+            const std::vector<output> notification_transaction_outputs(
+                const payment_code& alice,
+                const payment_code& bob,
+                unsigned int amount,
+                const ec_secret& designated, 
+                const outpoint& prior, 
+                address_format format
+            );
+            
+            // Check whether a tx is a v1 notifaction from alice to bob that uses 
+            // the given designated pubkey and has the given fee. 
+            bool check(const transaction& tx,
+                       const payment_code& alice,
+                       const payment_code& bob,
+                       const ec_compressed& designated,
+                       const blockchain&, N fee);
 
         } // v1
 
@@ -48,6 +67,14 @@ using blockchain = abstractions::blockchain<const outpoint, const output>;
                 unsigned int amount,
                 const ec_secret& designated, 
                 const outpoint& prior);
+            
+            // Check whether a tx is a v2 notifaction from alice to bob that uses 
+            // the given designated pubkey and has the given fee. 
+            bool check(const transaction& tx,
+                       const payment_code& alice,
+                       const payment_code& bob,
+                       const ec_compressed& designated,
+                       const blockchain&, N fee);
 
         } // v2
         

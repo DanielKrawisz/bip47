@@ -3,8 +3,6 @@
 namespace bip47
 {
 
-typedef libbitcoin::wallet::ec_public ec_public;
-
 namespace low
 {
 
@@ -47,7 +45,7 @@ const payment_code mask_payment_code(const low::payment_code& code, const ec_sec
     return mask_payment_code(code, m);
 }
 
-bool unmask_payment_code(payment_code& code, const ec_public& designated, const ec_secret& pk, const outpoint& outpoint) {
+bool unmask_payment_code(payment_code& code, const ec_compressed& designated, const ec_secret& pk, const outpoint& outpoint) {
     ec_compressed secret_point(designated);
     
     if (!libbitcoin::ec_multiply(secret_point, pk)) return false;

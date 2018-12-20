@@ -80,7 +80,7 @@ bool designated_pubkey_and_outpoint(
     for (auto in : nt.inputs()) {
 
         // Get the previous output corresponding to this input.
-        output o = b(in.previous_output());
+        output o = b[in.previous_output()];
         
         // We need to know that we have found the first input with a
         // designated pubkey in it so if any is null before we've 

@@ -10,13 +10,13 @@
 namespace bip47
 {
     
-typedef libbitcoin::ec_compressed ec_compressed;
-typedef libbitcoin::ec_secret ec_secret;
-typedef libbitcoin::wallet::hd_chain_code hd_chain_code;
-typedef libbitcoin::data_chunk data_chunk;
+using ec_compressed = abstractions::secp256k1::pubkey;
+using ec_secret = abstractions::secp256k1::secret;
+using hd_chain_code = libbitcoin::wallet::hd_chain_code;
+using data_chunk = libbitcoin::data_chunk;
 
-typedef abstractions::hd::secp256k1::public_node hd_public;
-typedef abstractions::hd::secp256k1::private_node hd_secret;
+using hd_public = abstractions::hd::secp256k1::public_node;
+using hd_secret = abstractions::hd::secp256k1::private_node;
 
 namespace hd
 {

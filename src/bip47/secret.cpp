@@ -7,18 +7,15 @@ namespace bip47
     
 bool secret::to(ec_compressed& pubkey, uint32_t n, const payment_code& pc) const {
     ec_compressed B = pc.derive_pubkey(n);
-    ec_compressed secret_point = B;
     
-    if (!libbitcoin::ec_multiply(secret_point, key.Secret)) return false;
+    ec_compressed secret_point = B * key.Secret;
+    if (!secret_point.valid()) return false;
     
     ec_secret s = libbitcoin::sha256_hash(secret_point);
     
-    //if (!s.valid()) return false;
+    if (!s.valid()) return false;
     
-    pubkey = low::point(pc);
-    if (!libbitcoin::ec_multiply(pubkey, s)) return false;
-    
-    // TODO finish this. I don't know how to add public keys together. 
+    pubkey = B + low::point(pc) * s;
     return true;
 }
 

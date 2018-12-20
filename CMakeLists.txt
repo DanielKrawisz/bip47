@@ -96,8 +96,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../abstractions/include")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(bip47 SHARED 
-    ../abstractions/src/abstractions/secp256k1.cpp
-    ../abstractions/src/abstractions/hd/secp256k1.cpp
+    ../abstractions/include/libbitcoin/secp256k1.hpp
     src/bip47/patterns.cpp
     src/bip47/low.cpp
     src/bip47/hd.cpp
